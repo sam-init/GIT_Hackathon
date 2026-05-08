@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { RCAPanel } from "@/components/RCAPanel";
 import { IncidentTimeline } from "@/components/IncidentTimeline";
-import { fetchIncident } from "@/lib/api";
+import { fetchIncident, API } from "@/lib/api";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -10,9 +10,10 @@ const SEV_COLOR: Record<string, string> = {
   critical: "#ef4444", high: "#f59e0b", medium: "#fde68a", low: "#10b981",
 };
 
-export default async function IncidentDetailPage({ params }: { params: { id: string } }) {
+export default async function IncidentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let incident: any = null;
-  try { incident = await fetchIncident(params.id); } catch {}
+  try { incident = await fetchIncident(id); } catch {}
 
   if (!incident) return (
     <div style={{ display:"flex", flexDirection:"column", height:"100vh" }}>
@@ -109,7 +110,7 @@ export default async function IncidentDetailPage({ params }: { params: { id: str
             }}>
               <div style={{ fontSize:24, marginBottom:8 }}>🔍</div>
               <div style={{ fontSize:13 }}>No RCA generated yet</div>
-              <form action={`http://localhost:8000/incidents/${params.id}/analyze`} method="POST" style={{ marginTop:16 }}>
+              <form action={`${API}/incidents/${id}/analyze`} method="POST" style={{ marginTop:16 }}>
                 <button style={{
                   padding:"8px 20px", borderRadius:8, fontSize:12, fontWeight:700, cursor:"pointer",
                   background:"rgba(6,182,212,0.15)", border:"1px solid rgba(6,182,212,0.3)", color:"#06b6d4",

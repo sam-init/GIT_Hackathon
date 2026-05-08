@@ -838,3 +838,277 @@ Use:
 * scalable design patterns,
 * production-style frontend design,
 * and realistic infrastructure workflows throughout the implementation.
+
+---
+
+# LOCAL SETUP GUIDE
+
+> Everything you need to run KubeGraph Sentinel on your machine from scratch.
+
+---
+
+## Prerequisites
+
+Make sure you have the following installed:
+
+| Tool | Version | Install |
+|------|---------|---------|
+| Python | 3.10 – 3.13 | [python.org](https://python.org) |
+| Node.js | 18+ | [nodejs.org](https://nodejs.org) |
+| npm | 9+ | comes with Node.js |
+| Go | 1.21+ (optional — for watcher agent) | [go.dev](https://go.dev) |
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/GIT_Hackathon.git
+cd GIT_Hackathon
+```
+
+---
+
+## 2. Environment Variables
+
+Copy the example env file and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and set the following:
+
+```env
+# --- REQUIRED for AI features ---
+NVIDIA_API_KEY=your_nvidia_api_key_here
+
+# Model to use (default works, change if needed)
+NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
+NVIDIA_MODEL=meta/llama-3.1-70b-instruct
+
+# --- Backend config (defaults work locally) ---
+BACKEND_HOST=0.0.0.0
+BACKEND_PORT=8000
+CORS_ORIGINS=http://localhost:3000
+
+# --- Frontend config (defaults work locally) ---
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# --- Watcher agent (mock mode by default) ---
+WATCHER_MOCK_MODE=true
+WATCHER_BACKEND_URL=http://localhost:8000
+WATCHER_INTERVAL_SECONDS=10
+```
+
+> **Getting an NVIDIA API key:**
+> 1. Go to [https://build.nvidia.com](https://build.nvidia.com)
+> 2. Sign up / log in
+> 3. Navigate to **API Keys** and generate a new key
+> 4. Paste it as `NVIDIA_API_KEY` in your `.env`
+>
+> **Note:** Without the key, all AI features (RCA, copilot, attack path explanation) still work — they return informative mock responses so the demo remains fully functional.
+
+---
+
+## 3. Backend Setup
+
+```bash
+cd backend
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Copy env (if not done already from root)
+cp ../.env .env
+
+# Start the backend API server
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+The backend will be available at:
+- **API:** `http://localhost:8000`
+- **Interactive docs:** `http://localhost:8000/docs`
+- **Health check:** `http://localhost:8000/health`
+
+> The backend automatically loads mock data from `../mock-data/` — no database setup required.
+
+---
+
+## 4. Frontend Setup
+
+Open a **new terminal** in the project root:
+
+```bash
+cd frontend
+
+# Install Node dependencies
+npm install
+
+# Start the dev server
+npm run dev
+```
+
+The frontend will be available at:
+- **Dashboard:** `http://localhost:3000`
+
+> The frontend reads `NEXT_PUBLIC_API_URL` from `frontend/.env.local` (already set to `http://localhost:8000`). If your backend runs on a different port, update that file.
+
+---
+
+## 5. CLI Setup (Optional)
+
+```bash
+cd cli
+
+# Install CLI dependencies
+pip install -r requirements.txt
+
+# Run any command
+python kubesentinel.py --help
+python kubesentinel.py scan
+python kubesentinel.py incidents
+python kubesentinel.py analyze auth-service
+python kubesentinel.py attack-paths
+python kubesentinel.py blast-radius auth-service
+```
+
+The CLI connects to `http://localhost:8000` by default. Override with:
+
+```bash
+KUBESENTINEL_API=http://your-backend:8000 python kubesentinel.py scan
+```
+
+---
+
+## 6. Watcher Agent Setup (Optional)
+
+> Requires Go 1.21+. Runs in mock mode by default — no live cluster needed.
+
+```bash
+cd watcher-agent
+
+# Build
+go build -o watcher ./cmd/watcher/
+
+# Run in mock mode (sends simulated failure events to backend)
+WATCHER_MOCK_MODE=true WATCHER_BACKEND_URL=http://localhost:8000 ./watcher
+```
+
+In mock mode the watcher replays realistic failure scenarios every 10 seconds, automatically creating incidents in the backend.
+
+---
+
+## 7. Failure Simulation (Demo)
+
+With the backend running, trigger failure scenarios from a terminal:
+
+```bash
+# Make script executable
+chmod +x scripts/simulate_failure.sh
+
+# Available scenarios
+./scripts/simulate_failure.sh auth      # auth-service CrashLoopBackOff
+./scripts/simulate_failure.sh redis     # Redis cluster OOMKilled
+./scripts/simulate_failure.sh postgres  # PostgreSQL connection saturation
+./scripts/simulate_failure.sh payment   # payment-service latency spike
+./scripts/simulate_failure.sh dns       # CoreDNS crash (cluster-wide)
+./scripts/simulate_failure.sh reset     # Reset all nodes to healthy
+```
+
+Or trigger directly via the **"Trigger Failure"** button in the UI at `http://localhost:3000`.
+
+---
+
+## 8. Docker Compose (Full Stack, One Command)
+
+```bash
+# From project root
+cp .env.example .env
+# Edit .env and add NVIDIA_API_KEY
+
+docker-compose up --build
+```
+
+Services:
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend | http://localhost:8000 |
+| Watcher Agent | (background, no UI) |
+
+---
+
+## Verify Everything is Working
+
+```bash
+# Backend health
+curl http://localhost:8000/health
+# → {"status":"ok","service":"kubesentinel-backend"}
+
+# Incidents loaded
+curl http://localhost:8000/incidents | python3 -m json.tool | head -20
+
+# Graph topology
+curl http://localhost:8000/graph | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Nodes: {len(d[\"nodes\"])}, Edges: {len(d[\"edges\"])}')"
+
+# Attack paths
+curl http://localhost:8000/graph/attack-paths | python3 -m json.tool
+```
+
+---
+
+## Project Structure
+
+```
+GIT_Hackathon/
+├── frontend/           # Next.js 16 — UI dashboard
+│   ├── app/            # Pages (/, /incidents, /attack-paths, /copilot)
+│   ├── components/     # TopologyGraph, IncidentPanel, AICopilot, RCAPanel, etc.
+│   └── lib/api.ts      # API client
+│
+├── backend/            # FastAPI — incident engine + AI
+│   ├── main.py         # App entry point
+│   └── app/
+│       ├── incidents/  # CRUD + mock data store
+│       ├── graph/      # NetworkX engine (blast radius, attack paths)
+│       ├── ai/         # NVIDIA LLM client + RCA prompt builder
+│       ├── copilot/    # Conversational AI handler
+│       └── ingestion/  # Telemetry ingest endpoint
+│
+├── watcher-agent/      # Go — Kubernetes event watcher (mock mode)
+├── cli/                # Python Click — kubesentinel CLI tool
+├── mock-data/          # Realistic incidents, topology, RCA fixtures
+├── scripts/            # simulate_failure.sh demo scripts
+├── infra/              # Kubernetes manifests + Prometheus setup
+├── docker-compose.yml  # Full stack one-command start
+├── .env.example        # Environment variable template
+└── README.md           # This file
+```
+
+---
+
+## Troubleshooting
+
+**Backend won't start / import errors:**
+```bash
+pip install -r backend/requirements.txt --upgrade
+```
+
+**Frontend shows blank page:**
+- Check that backend is running on port 8000
+- Verify `frontend/.env.local` contains `NEXT_PUBLIC_API_URL=http://localhost:8000`
+
+**AI features return mock responses:**
+- Add `NVIDIA_API_KEY` to your `.env` file
+- Restart the backend after changing env vars
+
+**`/incidents/undefined` 404 in logs:**
+- This was a Next.js 15+ async params bug — already fixed in the codebase.
+
+**Port 3000 already in use:**
+```bash
+# Find and kill the process
+lsof -ti:3000 | xargs kill -9
+npm run dev
+```
