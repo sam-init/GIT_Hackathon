@@ -1,0 +1,51 @@
+{
+  "topology": {
+    "nodes": [
+      { "id": "ingress", "type": "ingress", "label": "nginx-ingress", "namespace": "ingress-nginx", "status": "healthy" },
+      { "id": "frontend-svc", "type": "service", "label": "frontend-service", "namespace": "default", "status": "healthy" },
+      { "id": "auth-svc", "type": "service", "label": "auth-service", "namespace": "default", "status": "healthy" },
+      { "id": "payment-svc", "type": "service", "label": "payment-service", "namespace": "default", "status": "healthy" },
+      { "id": "order-svc", "type": "service", "label": "order-service", "namespace": "default", "status": "healthy" },
+      { "id": "notification-svc", "type": "service", "label": "notification-service", "namespace": "default", "status": "healthy" },
+      { "id": "admin-svc", "type": "service", "label": "admin-dashboard", "namespace": "default", "status": "healthy" },
+      { "id": "postgres", "type": "database", "label": "postgresql-primary", "namespace": "data", "status": "healthy" },
+      { "id": "redis", "type": "cache", "label": "redis-cluster", "namespace": "data", "status": "healthy" },
+      { "id": "kafka", "type": "message-queue", "label": "kafka-broker", "namespace": "data", "status": "healthy" },
+      { "id": "auth-pod-1", "type": "pod", "label": "auth-service-7d4b9c-xk2p", "namespace": "default", "status": "healthy" },
+      { "id": "auth-pod-2", "type": "pod", "label": "auth-service-7d4b9c-m9nq", "namespace": "default", "status": "healthy" },
+      { "id": "payment-pod-1", "type": "pod", "label": "payment-service-9f2c1d-vp3r", "namespace": "default", "status": "healthy" },
+      { "id": "order-pod-1", "type": "pod", "label": "order-service-5a8e2f-tz4s", "namespace": "default", "status": "healthy" },
+      { "id": "sa-auth", "type": "service-account", "label": "auth-sa", "namespace": "default", "status": "healthy" },
+      { "id": "sa-payment", "type": "service-account", "label": "payment-sa", "namespace": "default", "status": "healthy" },
+      { "id": "rbac-admin", "type": "cluster-role", "label": "cluster-admin-role", "namespace": "cluster", "status": "warning" },
+      { "id": "secret-db", "type": "secret", "label": "postgres-credentials", "namespace": "data", "status": "healthy" },
+      { "id": "secret-api", "type": "secret", "label": "api-keys-secret", "namespace": "default", "status": "healthy" }
+    ],
+    "edges": [
+      { "id": "e1", "source": "ingress", "target": "frontend-svc", "type": "traffic" },
+      { "id": "e2", "source": "ingress", "target": "auth-svc", "type": "traffic" },
+      { "id": "e3", "source": "frontend-svc", "target": "auth-svc", "type": "depends" },
+      { "id": "e4", "source": "frontend-svc", "target": "payment-svc", "type": "depends" },
+      { "id": "e5", "source": "frontend-svc", "target": "order-svc", "type": "depends" },
+      { "id": "e6", "source": "auth-svc", "target": "postgres", "type": "database" },
+      { "id": "e7", "source": "auth-svc", "target": "redis", "type": "cache" },
+      { "id": "e8", "source": "payment-svc", "target": "postgres", "type": "database" },
+      { "id": "e9", "source": "payment-svc", "target": "auth-svc", "type": "auth" },
+      { "id": "e10", "source": "order-svc", "target": "payment-svc", "type": "depends" },
+      { "id": "e11", "source": "order-svc", "target": "notification-svc", "type": "depends" },
+      { "id": "e12", "source": "order-svc", "target": "redis", "type": "cache" },
+      { "id": "e13", "source": "admin-svc", "target": "postgres", "type": "database" },
+      { "id": "e14", "source": "auth-svc", "target": "auth-pod-1", "type": "manages" },
+      { "id": "e15", "source": "auth-svc", "target": "auth-pod-2", "type": "manages" },
+      { "id": "e16", "source": "payment-svc", "target": "payment-pod-1", "type": "manages" },
+      { "id": "e17", "source": "order-svc", "target": "order-pod-1", "type": "manages" },
+      { "id": "e18", "source": "auth-pod-1", "target": "sa-auth", "type": "rbac" },
+      { "id": "e19", "source": "sa-auth", "target": "rbac-admin", "type": "bound-to" },
+      { "id": "e20", "source": "sa-auth", "target": "secret-db", "type": "accesses" },
+      { "id": "e21", "source": "sa-payment", "target": "secret-db", "type": "accesses" },
+      { "id": "e22", "source": "sa-payment", "target": "secret-api", "type": "accesses" },
+      { "id": "e23", "source": "notification-svc", "target": "kafka", "type": "publishes" },
+      { "id": "e24", "source": "order-svc", "target": "kafka", "type": "publishes" }
+    ]
+  }
+}
