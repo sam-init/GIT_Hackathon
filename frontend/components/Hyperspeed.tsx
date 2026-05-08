@@ -18,7 +18,7 @@ const OPTS = {
   length: 400,
   roadWidth: 10,
   islandWidth: 2,
-  lanesPerRoad: 3,
+  lanesPerRoad: 4,
   fov: 90,
   fovSpeedUp: 150,
   speedUp: 2,
@@ -41,8 +41,8 @@ const OPTS = {
     roadColor: 0x080808,
     islandColor: 0x0a0a0a,
     background: 0x000000,
-    shoulderLines: 0x131318,
-    brokenLines: 0x131318,
+    shoulderLines: 0xFFFFFF,
+    brokenLines: 0xFFFFFF,
     leftCars: [0xd856bf, 0x6750a2, 0xc247ac],
     rightCars: [0x03b3c3, 0x0e5ea5, 0x324555],
     sticks: 0x03b3c3
@@ -403,7 +403,7 @@ class HyperspeedApp {
   async init() {
     // Passes
     const renderPass = new RenderPass(this.scene, this.camera);
-    const bloomPass = new EffectPass(this.camera, new BloomEffect({ luminanceThreshold: 0.15, luminanceSmoothing: 0, resolutionScale: 1 }));
+    const bloomPass = new EffectPass(this.camera, new BloomEffect({ luminanceThreshold: 0.2, luminanceSmoothing: 0, resolutionScale: 1 }));
     const smaaPass = new EffectPass(this.camera, new SMAAEffect({ preset: SMAAPreset.MEDIUM }));
     renderPass.renderToScreen = false;
     bloomPass.renderToScreen = false;

@@ -138,14 +138,14 @@ export default function LandingPage() {
     <div style={{ background: "#0B1020", color: "#E2E8F0", fontFamily: "Inter, -apple-system, sans-serif", overflowX: "hidden" }}>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section style={{ position: "relative", height: "100vh", minHeight: 620, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <section style={{ position: "relative", height: "100vh", minHeight: 620, display: "flex", flexDirection: "column", overflow: "hidden", background: "#000000" }}>
         {/* Hyperspeed — hero only */}
         <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
           <HyperspeedBackground />
         </div>
 
-        {/* Readability overlay */}
-        <div style={{ position: "absolute", inset: 0, zIndex: 1, background: "linear-gradient(to bottom, rgba(11,16,32,0.72) 0%, rgba(11,16,32,0.48) 35%, rgba(11,16,32,0.82) 80%, #0B1020 100%)" }} />
+        {/* Readability overlay — black-based so neon trails are not tinted */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 1, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 30%, rgba(0,0,0,0.55) 72%, rgba(11,16,32,1) 100%)" }} />
 
         {/* Nav */}
         <nav style={{ position: "relative", zIndex: 10, height: 52, padding: "0 28px", display: "flex", alignItems: "center", borderBottom: "1px solid rgba(30,41,59,0.45)", flexShrink: 0 }}>
