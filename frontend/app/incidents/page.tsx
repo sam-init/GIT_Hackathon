@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { IncidentPanel } from "@/components/IncidentPanel";
+import { IncidentTable } from "@/components/IncidentTable";
 import { fetchIncidents } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -20,14 +21,14 @@ export default async function IncidentsPage() {
             Incident Dashboard
           </h1>
           <p style={{ color: "#4a5568", fontSize: 13, marginBottom: 28 }}>
-            {incidents.length} total incidents · {incidents.filter(i=>i.status==="active").length} active
+            {incidents.length} total incidents · {incidents.filter(i => i.status === "active").length} active
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 32 }}>
             {[
-              { label: "Active", value: incidents.filter(i=>i.status==="active").length, color: "#ef4444" },
-              { label: "Investigating", value: incidents.filter(i=>i.status==="investigating").length, color: "#f59e0b" },
-              { label: "Resolved", value: incidents.filter(i=>i.status==="resolved").length, color: "#10b981" },
+              { label: "Active",        value: incidents.filter(i => i.status === "active").length,        color: "#ef4444" },
+              { label: "Investigating", value: incidents.filter(i => i.status === "investigating").length, color: "#f59e0b" },
+              { label: "Resolved",      value: incidents.filter(i => i.status === "resolved").length,      color: "#10b981" },
             ].map(s => (
               <div key={s.label} style={{
                 padding: "20px 24px", borderRadius: 12, background: "rgba(17,24,39,0.8)",
@@ -42,28 +43,9 @@ export default async function IncidentsPage() {
           <div style={{ fontSize: 11, color: "#4a5568", letterSpacing: "0.1em", marginBottom: 12 }}>
             ALL INCIDENTS
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {incidents.map(inc => (
-              <a key={inc.id} href={`/incidents/${inc.id}`} style={{ textDecoration: "none" }}>
-                <div style={{
-                  padding: "16px 20px", borderRadius: 10, background: "rgba(17,24,39,0.8)",
-                  border: "1px solid #1e2d45", display: "flex", alignItems: "center", gap: 16,
-                  transition: "all 0.2s", cursor: "pointer",
-                }}
-                  onMouseEnter={e=>(e.currentTarget.style.borderColor="#2d4060")}
-                  onMouseLeave={e=>(e.currentTarget.style.borderColor="#1e2d45")}
-                >
-                  <span className={`badge badge-${inc.severity}`}>{inc.severity}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>{inc.title}</div>
-                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{inc.service} · {inc.namespace}</div>
-                  </div>
-                  <span className={`badge badge-${inc.status}`}>{inc.status}</span>
-                  <span style={{ fontSize: 11, color: "#4a5568" }}>{inc.started_at?.slice(11,16)} UTC</span>
-                </div>
-              </a>
-            ))}
-          </div>
+
+          {/* IncidentTable is "use client" — event handlers live here */}
+          <IncidentTable incidents={incidents} />
         </div>
       </div>
     </div>
