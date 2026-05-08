@@ -1,4 +1,5 @@
 "use client";
+import type { Incident } from "@/lib/api";
 
 interface RCA {
   root_cause?: string;
@@ -11,7 +12,7 @@ interface RCA {
 }
 
 interface Props {
-  incident: any;
+  incident: Incident;
   rca: RCA;
 }
 

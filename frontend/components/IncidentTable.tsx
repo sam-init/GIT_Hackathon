@@ -5,9 +5,6 @@ interface Incident {
   service: string; namespace: string; started_at: string;
 }
 
-const SEV_COLOR: Record<string, string> = {
-  critical: "#EF4444", high: "#F59E0B", medium: "#FBBF24", low: "#10B981",
-};
 const STATUS_COLOR: Record<string, string> = {
   active: "#EF4444", investigating: "#F59E0B", resolved: "#10B981",
 };

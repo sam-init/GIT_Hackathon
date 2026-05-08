@@ -2,13 +2,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-const SEVERITY_COLORS: Record<string, string> = {
-  critical: "#EF4444",
-  high:     "#F59E0B",
-  medium:   "#FBBF24",
-  low:      "#10B981",
-};
-
 const SEVERITY_BG: Record<string, string> = {
   critical: "rgba(239,68,68,0.07)",
   high:     "rgba(245,158,11,0.07)",
@@ -113,7 +106,6 @@ function CopyButton({ text }: { text: string }) {
 
 // ── Main component ─────────────────────────────────────────
 export function RCAPanel({ rca, severity }: { rca: RCA; severity: string }) {
-  const color  = SEVERITY_COLORS[severity] || "#6B7280";
   const bg     = SEVERITY_BG[severity]     || "rgba(107,114,128,0.06)";
   const border = SEVERITY_BORDER[severity] || "rgba(107,114,128,0.18)";
   const conf   = rca.confidence_score || 0;

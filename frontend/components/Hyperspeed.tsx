@@ -10,8 +10,65 @@ import {
   SMAAPreset,
 } from "postprocessing";
 
+type Range = [number, number];
+
+interface HyperspeedColors {
+  roadColor: number;
+  islandColor: number;
+  background: number;
+  shoulderLines: number;
+  brokenLines: number;
+  leftCars: number[];
+  rightCars: number[];
+  sticks: number;
+}
+
+interface HyperspeedOptions {
+  onSpeedUp: () => void;
+  onSlowDown: () => void;
+  distortion: string;
+  length: number;
+  roadWidth: number;
+  islandWidth: number;
+  lanesPerRoad: number;
+  fov: number;
+  fovSpeedUp: number;
+  speedUp: number;
+  carLightsFade: number;
+  totalSideLightSticks: number;
+  lightPairsPerRoadWay: number;
+  shoulderLinesWidthPercentage: number;
+  brokenLinesWidthPercentage: number;
+  brokenLinesLengthPercentage: number;
+  lightStickWidth: Range;
+  lightStickHeight: Range;
+  movingAwaySpeed: Range;
+  movingCloserSpeed: Range;
+  carLightsLength: Range;
+  carLightsRadius: Range;
+  carWidthPercentage: Range;
+  carShiftX: Range;
+  carFloorSeparation: Range;
+  colors: HyperspeedColors;
+}
+
+interface DistortionUniforms {
+  uFreq: { value: THREE.Vector4 };
+  uAmp: { value: THREE.Vector4 };
+}
+
+interface DistortionDefinition {
+  uniforms: DistortionUniforms;
+  getDistortion: string;
+  getJS: (progress: number, time: number) => THREE.Vector3;
+}
+
+interface WebglSceneContext {
+  scene: THREE.Scene;
+}
+
 // ─── tuneable options ────────────────────────────────────────────────────────
-const OPTS = {
+const OPTS: HyperspeedOptions = {
   onSpeedUp: () => { },
   onSlowDown: () => { },
   distortion: 'turbulentDistortion',
@@ -43,9 +100,9 @@ const OPTS = {
     background: 0x000000,
     shoulderLines: 0x131318,
     brokenLines: 0x131318,
-    leftCars: [0xd856bf, 0x6750a2, 0xc247ac],
-    rightCars: [0x03b3c3, 0x0e5ea5, 0x324555],
-    sticks: 0x03b3c3
+    leftCars: [0xffffff, 0xf4fbff, 0xdff6ff],
+    rightCars: [0xffffff, 0xf2fbff, 0xcfefff],
+    sticks: 0xf8fdff
   },
 };
 
@@ -83,7 +140,7 @@ const turbulentUniforms = {
   uAmp: { value: new THREE.Vector4(25, 5, 10, 10) },
 };
 
-const DISTORTIONS: Record<string, any> = {
+const DISTORTIONS: Record<string, DistortionDefinition> = {
   turbulentDistortion: {
     uniforms: turbulentUniforms,
     getDistortion: `
@@ -114,18 +171,17 @@ const DISTORTIONS: Record<string, any> = {
 
 // ─── Road class ───────────────────────────────────────────────────────────────
 class Road {
-  webgl: any; options: any; uTime: any; leftRoadWay: any; rightRoadWay: any;
-  constructor(webgl: any, options: any) { this.webgl = webgl; this.options = options; this.uTime = { value: 0 }; }
+  webgl: WebglSceneContext;
+  options: HyperspeedOptions;
+  uTime: { value: number };
+  leftRoadWay?: THREE.Mesh;
+  rightRoadWay?: THREE.Mesh;
+  constructor(webgl: WebglSceneContext, options: HyperspeedOptions) { this.webgl = webgl; this.options = options; this.uTime = { value: 0 }; }
   createPlane(side: number, width: number, isRoad: boolean) {
     const opts = this.options;
     const segments = 100;
     const geometry = new THREE.PlaneGeometry(1, 1, 1, segments);
-    const islandSpeedFix = `
-      float shoulderLinesWidthPercentage = ${opts.shoulderLinesWidthPercentage.toFixed(2)};
-      float brokenLinesWidthPercentage   = ${opts.brokenLinesWidthPercentage.toFixed(2)};
-      float brokenLinesLengthPercentage  = ${opts.brokenLinesLengthPercentage.toFixed(2)};
-    `;
-    let color = isRoad ? opts.colors.roadColor : opts.colors.islandColor;
+    const color = isRoad ? opts.colors.roadColor : opts.colors.islandColor;
     const material = new THREE.ShaderMaterial({
       fragmentShader: `
         varying vec2 vUv;
@@ -188,8 +244,13 @@ class Road {
 
 // ─── CarLights class ──────────────────────────────────────────────────────────
 class CarLights {
-  webgl: any; options: any; colors: any; speed: any; fade: any; mesh: any;
-  constructor(webgl: any, options: any, colors: any, speed: any, fade: any) {
+  webgl: WebglSceneContext;
+  options: HyperspeedOptions;
+  colors: number[];
+  speed: Range;
+  fade: THREE.Vector2;
+  mesh!: THREE.Mesh<THREE.InstancedBufferGeometry, THREE.ShaderMaterial>;
+  constructor(webgl: WebglSceneContext, options: HyperspeedOptions, colors: number[], speed: Range, fade: THREE.Vector2) {
     this.webgl = webgl; this.options = options;
     this.colors = colors; this.speed = speed; this.fade = fade;
   }
@@ -197,13 +258,11 @@ class CarLights {
     const opts = this.options;
     const curve = new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1));
     const geo = new THREE.TubeGeometry(curve, 40, 1, 8, false);
-    const instanced = new THREE.InstancedBufferGeometry().copy(geo as any);
+    const instanced = new THREE.InstancedBufferGeometry().copy(geo);
     instanced.instanceCount = opts.lightPairsPerRoadWay * 2;
     const laneWidth = opts.roadWidth / opts.lanesPerRoad;
     const aOffset: number[] = [], aMetrics: number[] = [], aColor: number[] = [];
-    let colors: THREE.Color | THREE.Color[] = this.colors;
-    if (Array.isArray(colors)) colors = colors.map((c: any) => new THREE.Color(c));
-    else colors = new THREE.Color(colors as any);
+    const colors = this.colors.map((c) => new THREE.Color(c));
     for (let i = 0; i < opts.lightPairsPerRoadWay; i++) {
       const radius = randomRange(opts.carLightsRadius);
       const length = randomRange(opts.carLightsLength);
@@ -286,12 +345,14 @@ class CarLights {
 
 // ─── LightsSticks class ───────────────────────────────────────────────────────
 class LightsSticks {
-  webgl: any; options: any; mesh: any;
-  constructor(webgl: any, options: any) { this.webgl = webgl; this.options = options; }
+  webgl: WebglSceneContext;
+  options: HyperspeedOptions;
+  mesh!: THREE.Mesh<THREE.InstancedBufferGeometry, THREE.ShaderMaterial>;
+  constructor(webgl: WebglSceneContext, options: HyperspeedOptions) { this.webgl = webgl; this.options = options; }
   init() {
     const opts = this.options;
     const geo = new THREE.PlaneGeometry(1, 1);
-    const instanced = new THREE.InstancedBufferGeometry().copy(geo as any);
+    const instanced = new THREE.InstancedBufferGeometry().copy(geo);
     instanced.instanceCount = opts.totalSideLightSticks;
     const aOffset: number[] = [], aMetrics: number[] = [], aColor: number[] = [];
     for (let i = 0; i < opts.totalSideLightSticks; i++) {
@@ -403,7 +464,12 @@ class HyperspeedApp {
   async init() {
     // Passes
     const renderPass = new RenderPass(this.scene, this.camera);
-    const bloomPass = new EffectPass(this.camera, new BloomEffect({ luminanceThreshold: 0.15, luminanceSmoothing: 0, resolutionScale: 1 }));
+    const bloomPass = new EffectPass(this.camera, new BloomEffect({
+      intensity: 2.2,
+      luminanceThreshold: 0.02,
+      luminanceSmoothing: 0.08,
+      resolutionScale: 1,
+    }));
     const smaaPass = new EffectPass(this.camera, new SMAAEffect({ preset: SMAAPreset.MEDIUM }));
     renderPass.renderToScreen = false;
     bloomPass.renderToScreen = false;
@@ -436,8 +502,8 @@ class HyperspeedApp {
         this.hasValidSize = true;
       } else { requestAnimationFrame(this.tick); return; }
     }
-    resizeRendererToDisplaySize(this.renderer, (w, h, b) => {
-      this.composer.setSize(w, h, b as any);
+    resizeRendererToDisplaySize(this.renderer, (w, h) => {
+      this.composer.setSize(w, h);
       this.hasValidSize = true;
     });
     const delta = this.clock.getDelta();
@@ -464,10 +530,10 @@ class HyperspeedApp {
 
   dispose() {
     this.disposed = true;
-    this.scene.traverse((obj: any) => {
-      if (!obj.isMesh) return;
+    this.scene.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh)) return;
       obj.geometry?.dispose();
-      if (Array.isArray(obj.material)) obj.material.forEach((m: any) => m.dispose());
+      if (Array.isArray(obj.material)) obj.material.forEach((material) => material.dispose());
       else obj.material?.dispose();
     });
     this.scene.clear();

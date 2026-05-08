@@ -2,18 +2,14 @@ import { Navbar } from "@/components/Navbar";
 import { RCAPanel } from "@/components/RCAPanel";
 import { RCAExportButton } from "@/components/RCAExportButton";
 import { IncidentTimeline } from "@/components/IncidentTimeline";
-import { fetchIncident, API } from "@/lib/api";
+import { fetchIncident, API, type Incident } from "@/lib/api";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-const SEV_COLOR: Record<string, string> = {
-  critical: "#EF4444", high: "#F59E0B", medium: "#FBBF24", low: "#10B981",
-};
-
 export default async function IncidentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  let incident: any = null;
+  let incident: Incident | null = null;
   try { incident = await fetchIncident(id); } catch {}
 
   if (!incident) return (
@@ -38,9 +34,6 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
       </div>
     </div>
   );
-
-  const color = SEV_COLOR[incident.severity] || "#6B7280";
-
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Navbar />

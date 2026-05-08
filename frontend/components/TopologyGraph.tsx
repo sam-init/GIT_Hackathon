@@ -2,11 +2,11 @@
 import { useCallback, useState } from "react";
 import ReactFlow, {
   Background, Controls, MiniMap, useNodesState, useEdgesState,
-  BackgroundVariant, MarkerType,
+  BackgroundVariant, MarkerType, type Node, type Edge, type NodeMouseHandler,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { KubeNode } from "./KubeNode";
-import { simulateFailure, resetTopology } from "@/lib/api";
+import { simulateFailure, resetTopology, type TopologyData, type TopologyEdge, type TopologyNode } from "@/lib/api";
 
 const nodeTypes = { kubeNode: KubeNode };
 
@@ -24,16 +24,16 @@ const EDGE_COLORS: Record<string, string> = {
   publishes:        "#10B981",
 };
 
-function buildRFNodes(nodes: any[]) {
+function buildRFNodes(nodes: TopologyNode[]): Node<TopologyNode>[] {
   return nodes.map((n, i) => ({
     id: n.id,
     type: "kubeNode",
-    position: getPosition(n.type, i, nodes.length),
+    position: getPosition(n.type, i),
     data: n,
   }));
 }
 
-function getPosition(type: string, index: number, total: number) {
+function getPosition(type: string, index: number) {
   const layers: Record<string, number> = {
     ingress: 0, service: 1, pod: 2, database: 3,
     cache: 3, "message-queue": 3,
@@ -45,7 +45,7 @@ function getPosition(type: string, index: number, total: number) {
   return { x, y };
 }
 
-function buildRFEdges(edges: any[]) {
+function buildRFEdges(edges: TopologyEdge[]): Edge[] {
   return edges.map((e) => ({
     id: e.id || `${e.source}-${e.target}`,
     source: e.source,
@@ -69,8 +69,8 @@ function buildRFEdges(edges: any[]) {
 }
 
 interface TopologyGraphProps {
-  initialTopology: { nodes: any[]; edges: any[] };
-  onNodeClick?: (node: any) => void;
+  initialTopology: TopologyData;
+  onNodeClick?: (node: TopologyNode) => void;
 }
 
 const SCENARIOS = [
@@ -109,7 +109,7 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
     }
   }
 
-  const onNodeClickCb = useCallback((_: any, node: any) => {
+  const onNodeClickCb: NodeMouseHandler = useCallback((_, node) => {
     onNodeClick?.(node.data);
   }, [onNodeClick]);
 

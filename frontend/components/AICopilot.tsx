@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatWithCopilot } from "@/lib/api";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 interface Message { role: "user" | "assistant"; content: string; }
@@ -16,35 +16,38 @@ const SUGGESTIONS = [
 ];
 
 // Markdown overrides — dark theme, enterprise feel
-const mdComponents = {
-  p: ({ children }: any) => (
+type MarkdownProps = { children?: React.ReactNode };
+type MarkdownCodeProps = MarkdownProps & { inline?: boolean };
+
+const mdComponents: Components = {
+  p: ({ children }: MarkdownProps) => (
     <p style={{ margin: "0 0 8px 0", lineHeight: 1.7 }}>{children}</p>
   ),
-  strong: ({ children }: any) => (
+  strong: ({ children }: MarkdownProps) => (
     <strong style={{ color: "#E2E8F0", fontWeight: 700 }}>{children}</strong>
   ),
-  ul: ({ children }: any) => (
+  ul: ({ children }: MarkdownProps) => (
     <ul style={{ margin: "4px 0 10px 0", paddingLeft: 16 }}>{children}</ul>
   ),
-  ol: ({ children }: any) => (
+  ol: ({ children }: MarkdownProps) => (
     <ol style={{ margin: "4px 0 10px 0", paddingLeft: 16 }}>{children}</ol>
   ),
-  li: ({ children }: any) => (
+  li: ({ children }: MarkdownProps) => (
     <li style={{ marginBottom: 4, color: "#CBD5E1", lineHeight: 1.6 }}>{children}</li>
   ),
-  h1: ({ children }: any) => (
+  h1: ({ children }: MarkdownProps) => (
     <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", marginBottom: 6, marginTop: 10 }}>{children}</div>
   ),
-  h2: ({ children }: any) => (
+  h2: ({ children }: MarkdownProps) => (
     <div style={{ fontSize: 12, fontWeight: 700, color: "#E2E8F0", marginBottom: 5, marginTop: 8 }}>{children}</div>
   ),
-  h3: ({ children }: any) => (
+  h3: ({ children }: MarkdownProps) => (
     <div style={{
       fontSize: 10, fontWeight: 700, color: "#64748B", marginBottom: 4, marginTop: 7,
       textTransform: "uppercase", letterSpacing: "0.07em",
     }}>{children}</div>
   ),
-  code: ({ inline, children }: any) =>
+  code: ({ inline, children }: MarkdownCodeProps) =>
     inline ? (
       <code style={{
         background: "rgba(56,189,248,0.08)", color: "#38BDF8",
@@ -62,24 +65,24 @@ const mdComponents = {
         </code>
       </pre>
     ),
-  blockquote: ({ children }: any) => (
+  blockquote: ({ children }: MarkdownProps) => (
     <blockquote style={{
       borderLeft: "2px solid #334155", paddingLeft: 10,
       margin: "6px 0", color: "#64748B", fontStyle: "italic",
     }}>{children}</blockquote>
   ),
-  table: ({ children }: any) => (
+  table: ({ children }: MarkdownProps) => (
     <div style={{ overflowX: "auto", margin: "8px 0" }}>
       <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 11 }}>{children}</table>
     </div>
   ),
-  th: ({ children }: any) => (
+  th: ({ children }: MarkdownProps) => (
     <th style={{
       border: "1px solid var(--border)", padding: "4px 10px",
       background: "var(--bg-panel)", color: "#94A3B8", fontWeight: 700, textAlign: "left", fontSize: 10,
     }}>{children}</th>
   ),
-  td: ({ children }: any) => (
+  td: ({ children }: MarkdownProps) => (
     <td style={{ border: "1px solid var(--border)", padding: "4px 10px", color: "#CBD5E1" }}>{children}</td>
   ),
 };
@@ -217,7 +220,7 @@ export function AICopilot() {
                 {msg.role === "assistant" ? (
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
-                    components={mdComponents as any}
+                    components={mdComponents}
                   >
                     {msg.content}
                   </ReactMarkdown>

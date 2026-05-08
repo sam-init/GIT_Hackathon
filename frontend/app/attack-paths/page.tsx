@@ -1,11 +1,11 @@
 import { Navbar } from "@/components/Navbar";
-import { fetchAttackPaths, explainAttackPaths } from "@/lib/api";
+import { fetchAttackPaths, explainAttackPaths, type AttackPath, type AttackPathExplanation } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export default async function AttackPathsPage() {
-  let paths: any[] = [];
-  let explanation: any = {};
+  let paths: AttackPath[] = [];
+  let explanation: AttackPathExplanation = {};
   try { paths = await fetchAttackPaths(); } catch {}
   try { explanation = await explainAttackPaths(); } catch {}
 

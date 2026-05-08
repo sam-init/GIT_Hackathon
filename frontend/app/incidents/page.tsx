@@ -1,12 +1,12 @@
 import { Navbar } from "@/components/Navbar";
 import { IncidentPanel } from "@/components/IncidentPanel";
 import { IncidentTable } from "@/components/IncidentTable";
-import { fetchIncidents } from "@/lib/api";
+import { fetchIncidents, type Incident } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export default async function IncidentsPage() {
-  let incidents: any[] = [];
+  let incidents: Incident[] = [];
   try { incidents = await fetchIncidents(); } catch {}
 
   const activeCount       = incidents.filter((i) => i.status === "active").length;

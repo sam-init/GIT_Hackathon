@@ -2,20 +2,20 @@ import { Navbar } from "@/components/Navbar";
 import { TopologyGraph } from "@/components/TopologyGraph";
 import { IncidentPanel } from "@/components/IncidentPanel";
 import { AICopilot } from "@/components/AICopilot";
-import { fetchTopology, fetchIncidents } from "@/lib/api";
+import { fetchTopology, fetchIncidents, type Incident, type TopologyData, type TopologyNode } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  let topology = { nodes: [], edges: [] };
-  let incidents: any[] = [];
+  let topology: TopologyData = { nodes: [], edges: [] };
+  let incidents: Incident[] = [];
 
   try { topology = await fetchTopology(); } catch {}
   try { incidents = await fetchIncidents(); } catch {}
 
   const activeCount   = incidents.filter((i) => i.status === "active").length;
   const criticalCount = incidents.filter((i) => i.severity === "critical").length;
-  const healthyNodes  = topology.nodes?.filter((n: any) => n.status === "healthy").length ?? 0;
+  const healthyNodes  = topology.nodes?.filter((n: TopologyNode) => n.status === "healthy").length ?? 0;
   const totalNodes    = topology.nodes?.length ?? 0;
 
   const stats = [
