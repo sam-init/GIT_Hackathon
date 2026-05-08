@@ -19,13 +19,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
+origins = ["*"] if CORS_ORIGINS == "*" else CORS_ORIGINS.split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=False,  # must be False when allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(incidents_router, prefix="/incidents", tags=["incidents"])
 app.include_router(graph_router, prefix="/graph", tags=["graph"])

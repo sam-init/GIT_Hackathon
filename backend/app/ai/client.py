@@ -24,10 +24,16 @@ async def call_llm(prompt: str, system: str, max_tokens: int = 1024, context: di
         "max_tokens": max_tokens,
         "temperature": 0.3,
     }
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(f"{NVIDIA_BASE_URL}/chat/completions", json=payload, headers=headers)
-        resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"]
+    async with httpx.AsyncClient(timeout=25.0) as client:
+        try:
+            resp = await client.post(f"{NVIDIA_BASE_URL}/chat/completions", json=payload, headers=headers)
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"]
+        except httpx.TimeoutException:
+            raise TimeoutError("NVIDIA API ReadTimeout — model took too long to respond")
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(f"NVIDIA API error {e.response.status_code}: {e.response.text[:200]}")
+
 
 
 def _smart_mock_response(prompt: str, context: dict = {}) -> str:
