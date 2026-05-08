@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { RCAPanel } from "@/components/RCAPanel";
+import { RCAExportButton } from "@/components/RCAExportButton";
 import { IncidentTimeline } from "@/components/IncidentTimeline";
 import { fetchIncident, API } from "@/lib/api";
 import Link from "next/link";
@@ -98,8 +99,9 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
           {/* RCA */}
           {incident.rca ? (
             <div style={{ borderRadius:12, border:"1px solid #1e2d45", background:"rgba(17,24,39,0.8)", overflow:"hidden" }}>
-              <div style={{ padding:"14px 20px", borderBottom:"1px solid #1e2d45", fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"0.1em" }}>
-                AI ROOT CAUSE ANALYSIS
+              <div style={{ padding:"12px 20px", borderBottom:"1px solid #1e2d45", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"#94a3b8", letterSpacing:"0.1em" }}>AI ROOT CAUSE ANALYSIS</div>
+                <RCAExportButton incident={incident} rca={incident.rca} />
               </div>
               <RCAPanel rca={incident.rca} severity={incident.severity} />
             </div>
