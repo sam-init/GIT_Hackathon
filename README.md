@@ -1112,3 +1112,192 @@ pip install -r backend/requirements.txt --upgrade
 lsof -ti:3000 | xargs kill -9
 npm run dev
 ```
+
+---
+
+# MINIKUBE INTEGRATION GUIDE
+
+> How to connect KubeGraph Sentinel to your real minikube cluster running in WSL + Docker.
+
+---
+
+## Prerequisites
+
+- minikube running (`minikube status` shows Running)
+- kubectl accessible in WSL
+- Backend running on `http://localhost:8000`
+
+---
+
+## Step 1 — Set Up kubectl in WSL
+
+Your kubeconfig lives on the Windows side. Run this once to create a WSL-compatible copy:
+
+```bash
+mkdir -p ~/.kube
+
+python3 -c "
+import re
+cfg = open('/mnt/c/Users/shrey/.kube/config').read()
+cfg = re.sub(r'C:\\\\Users\\\\shrey\\\\', '/mnt/c/Users/shrey/', cfg)
+cfg = re.sub(r'C:/Users/shrey/', '/mnt/c/Users/shrey/', cfg)
+cfg = cfg.replace('\\\\\\\\', '/')
+open('/home/shreyas/.kube/config','w').write(cfg)
+print('Done')
+"
+
+chmod 600 ~/.kube/config
+export KUBECONFIG=/home/shreyas/.kube/config
+
+# Verify
+kubectl get nodes
+# → NAME       STATUS   ROLES           AGE   VERSION
+# → minikube   Ready    control-plane   ...   v1.35.x
+```
+
+---
+
+## Step 2 — Deploy Demo Services to Minikube
+
+```bash
+cd /mnt/d/programming/GIT_Hackathon
+
+chmod +x infra/scripts/setup-minikube.sh
+KUBECONFIG=/home/shreyas/.kube/config bash infra/scripts/setup-minikube.sh
+```
+
+This creates two namespaces and deploys:
+
+| Resource | Namespace | Purpose |
+|---|---|---|
+| auth-service (×2 pods) | kubesentinel-demo | Auth microservice |
+| payment-service | kubesentinel-demo | Payment microservice |
+| order-service | kubesentinel-demo | Order microservice |
+| notification-service | kubesentinel-demo | Notification microservice |
+| admin-dashboard | kubesentinel-demo | Admin UI |
+| postgresql-primary | kubesentinel-data | PostgreSQL database |
+| redis-cluster | kubesentinel-data | Redis cache |
+| auth-sa (ClusterRoleBinding → cluster-admin) | kubesentinel-demo | ⚠️ Intentional RBAC risk for attack path demo |
+| postgres-credentials (Secret) | kubesentinel-data | DB secret accessible via attack path |
+
+Verify:
+```bash
+kubectl get pods -n kubesentinel-demo
+kubectl get pods -n kubesentinel-data
+```
+
+---
+
+## Step 3 — Start the Real Kubernetes Watcher
+
+```bash
+cd watcher-agent
+
+# Install dependencies (once)
+pip install -r requirements.txt
+
+# Run watcher pointing at your minikube cluster
+KUBECONFIG=/home/shreyas/.kube/config \
+WATCHER_BACKEND_URL=http://localhost:8000 \
+WATCH_NAMESPACES=kubesentinel-demo,kubesentinel-data \
+python3 k8s_watcher.py
+```
+
+The watcher:
+- Polls pods every 15s for `CrashLoopBackOff`, `OOMKilled`, `ImagePullBackOff`, restart spikes
+- Watches Kubernetes Warning events
+- Detects over-privileged `ClusterRoleBindings` (finds `auth-sa → cluster-admin` immediately)
+- Sends structured telemetry to `POST /telemetry` → auto-creates incidents
+
+---
+
+## Step 4 — Simulate Real Failures
+
+With the watcher running, trigger actual Kubernetes failures:
+
+```bash
+chmod +x scripts/simulate_k8s_failure.sh
+
+# Trigger auth-service CrashLoopBackOff (bad image)
+./scripts/simulate_k8s_failure.sh auth
+
+# Trigger Redis OOMKilled (4Mi memory limit)
+./scripts/simulate_k8s_failure.sh redis
+
+# Rapid restart spike (exit 1 in loop)
+./scripts/simulate_k8s_failure.sh restart
+
+# Scale payment-service to 0 (outage)
+./scripts/simulate_k8s_failure.sh payment
+
+# PostgreSQL connection saturation (telemetry injection)
+./scripts/simulate_k8s_failure.sh db
+
+# Force delete pods (node pressure simulation)
+./scripts/simulate_k8s_failure.sh kill
+
+# Check cluster + incident status
+./scripts/simulate_k8s_failure.sh status
+
+# Reset ALL services back to healthy
+./scripts/simulate_k8s_failure.sh reset
+```
+
+---
+
+## Step 5 — Watch It All Come Together
+
+Open these simultaneously:
+
+```bash
+# Terminal 1 — Backend
+cd backend && uvicorn main:app --reload --port 8000
+
+# Terminal 2 — Frontend
+cd frontend && npm run dev
+
+# Terminal 3 — Real Kubernetes Watcher
+cd watcher-agent
+KUBECONFIG=/home/shreyas/.kube/config python3 k8s_watcher.py
+
+# Terminal 4 — Trigger a failure
+./scripts/simulate_k8s_failure.sh auth
+```
+
+Then:
+1. Watch the watcher terminal detect `CrashLoopBackOff` within ~15s
+2. Open `http://localhost:3000` — see the incident appear in the panel
+3. Click the incident → see the auto-generated AI RCA
+4. The RBAC attack path (`auth-sa → cluster-admin`) appears on `/attack-paths` automatically
+
+---
+
+## Attack Path Demo (Auto-Detected)
+
+The watcher detects the intentional over-privilege immediately on startup:
+
+```
+[RBAC] RISK: auth-sa in kubesentinel-demo → cluster-admin
+       Binding: auth-sa-admin-binding
+```
+
+This creates a `SecurityAlert` incident in the backend. Visit `/attack-paths` to see:
+- `auth-sa → cluster-admin → postgres-credentials + api-keys-secret`
+- AI explanation of the privilege escalation risk
+- Remediation kubectl commands
+
+To clean up the risky binding after the demo:
+```bash
+kubectl delete clusterrolebinding auth-sa-admin-binding
+```
+
+---
+
+## Teardown
+
+Remove all demo resources from minikube:
+
+```bash
+KUBECONFIG=/home/shreyas/.kube/config kubectl delete namespace kubesentinel-demo kubesentinel-data
+KUBECONFIG=/home/shreyas/.kube/config kubectl delete clusterrolebinding auth-sa-admin-binding 2>/dev/null || true
+```

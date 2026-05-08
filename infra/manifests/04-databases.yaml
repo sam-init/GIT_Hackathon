@@ -1,0 +1,99 @@
+# ─── PostgreSQL ──────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql-primary
+  namespace: kubesentinel-data
+  labels:
+    app: postgresql-primary
+    kubesentinel-node-id: postgres
+    kubesentinel-type: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql-primary
+  template:
+    metadata:
+      labels:
+        app: postgresql-primary
+        kubesentinel-node-id: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: username
+        ports:
+        - containerPort: 5432
+        resources:
+          requests: { cpu: "100m", memory: "128Mi" }
+          limits:   { cpu: "500m", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: kubesentinel-data
+  labels:
+    kubesentinel-node-id: postgres
+spec:
+  selector:
+    app: postgresql-primary
+  ports:
+  - port: 5432
+    targetPort: 5432
+---
+# ─── Redis ───────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-cluster
+  namespace: kubesentinel-data
+  labels:
+    app: redis-cluster
+    kubesentinel-node-id: redis
+    kubesentinel-type: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+        kubesentinel-node-id: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        args: ["--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+        ports:
+        - containerPort: 6379
+        resources:
+          requests: { cpu: "50m", memory: "64Mi" }
+          limits:   { cpu: "200m", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: kubesentinel-data
+  labels:
+    kubesentinel-node-id: redis
+spec:
+  selector:
+    app: redis-cluster
+  ports:
+  - port: 6379
+    targetPort: 6379
