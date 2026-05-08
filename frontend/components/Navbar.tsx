@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
+  { href: "/landing",      label: "Home",         icon: "◇" },
   { href: "/",             label: "Topology",     icon: "⬡" },
   { href: "/incidents",    label: "Incidents",    icon: "●" },
   { href: "/attack-paths", label: "Attack Paths", icon: "◈" },

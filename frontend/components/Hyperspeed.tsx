@@ -12,11 +12,13 @@ import {
 
 // ─── tuneable options ────────────────────────────────────────────────────────
 const OPTS = {
-  distortion: "turbulentDistortion" as const,
+  onSpeedUp: () => { },
+  onSlowDown: () => { },
+  distortion: 'turbulentDistortion',
   length: 400,
   roadWidth: 10,
   islandWidth: 2,
-  lanesPerRoad: 4,
+  lanesPerRoad: 3,
   fov: 90,
   fovSpeedUp: 150,
   speedUp: 2,
@@ -26,25 +28,24 @@ const OPTS = {
   shoulderLinesWidthPercentage: 0.05,
   brokenLinesWidthPercentage: 0.1,
   brokenLinesLengthPercentage: 0.5,
-  lightStickWidth: [0.12, 0.5] as [number, number],
-  lightStickHeight: [1.3, 1.7] as [number, number],
-  movingAwaySpeed: [60, 80] as [number, number],
-  movingCloserSpeed: [-120, -160] as [number, number],
-  carLightsLength: [400 * 0.03, 400 * 0.2] as [number, number],
-  carLightsRadius: [0.05, 0.14] as [number, number],
-  carWidthPercentage: [0.3, 0.5] as [number, number],
-  carShiftX: [-0.8, 0.8] as [number, number],
-  carFloorSeparation: [0, 5] as [number, number],
-  // Enterprise palette: dark road, subtle cyan/blue light streaks
+  lightStickWidth: [0.12, 0.5],
+  lightStickHeight: [1.3, 1.7],
+  movingAwaySpeed: [60, 80],
+  movingCloserSpeed: [-120, -160],
+  carLightsLength: [400 * 0.03, 400 * 0.2],
+  carLightsRadius: [0.05, 0.14],
+  carWidthPercentage: [0.3, 0.5],
+  carShiftX: [-0.8, 0.8],
+  carFloorSeparation: [0, 5],
   colors: {
-    roadColor: 0x060810,
-    islandColor: 0x080c14,
-    background: 0x060810,
-    shoulderLines: 0x1e293b,
-    brokenLines: 0x1e293b,
-    leftCars:  [0x1d4ed8, 0x1e40af, 0x2563eb],  // blue shades
-    rightCars: [0x0e7490, 0x0284c7, 0x38bdf8],   // cyan/sky shades
-    sticks: 0x0ea5e9,
+    roadColor: 0x080808,
+    islandColor: 0x0a0a0a,
+    background: 0x000000,
+    shoulderLines: 0x131318,
+    brokenLines: 0x131318,
+    leftCars: [0xd856bf, 0x6750a2, 0xc247ac],
+    rightCars: [0x03b3c3, 0x0e5ea5, 0x324555],
+    sticks: 0x03b3c3
   },
 };
 
@@ -79,7 +80,7 @@ const nsin = (v: number) => Math.sin(v) * 0.5 + 0.5;
 
 const turbulentUniforms = {
   uFreq: { value: new THREE.Vector4(4, 8, 8, 1) },
-  uAmp:  { value: new THREE.Vector4(25, 5, 10, 10) },
+  uAmp: { value: new THREE.Vector4(25, 5, 10, 10) },
 };
 
 const DISTORTIONS: Record<string, any> = {
@@ -102,11 +103,11 @@ const DISTORTIONS: Record<string, any> = {
     `,
     getJS: (progress: number, time: number) => {
       const uFreq = turbulentUniforms.uFreq.value;
-      const uAmp  = turbulentUniforms.uAmp.value;
-      const getX  = (p: number) => Math.cos(Math.PI*p*uFreq.x+time)*uAmp.x + Math.pow(Math.cos(Math.PI*p*uFreq.y+time*(uFreq.y/uFreq.x)),2)*uAmp.y;
-      const getY  = (p: number) => -nsin(Math.PI*p*uFreq.z+time)*uAmp.z - Math.pow(nsin(Math.PI*p*uFreq.w+time/(uFreq.z/uFreq.w)),5)*uAmp.w;
-      const d = new THREE.Vector3(getX(progress)-getX(progress+0.007), getY(progress)-getY(progress+0.007), 0);
-      return d.multiply(new THREE.Vector3(-2,-5,0)).add(new THREE.Vector3(0,0,-10));
+      const uAmp = turbulentUniforms.uAmp.value;
+      const getX = (p: number) => Math.cos(Math.PI * p * uFreq.x + time) * uAmp.x + Math.pow(Math.cos(Math.PI * p * uFreq.y + time * (uFreq.y / uFreq.x)), 2) * uAmp.y;
+      const getY = (p: number) => -nsin(Math.PI * p * uFreq.z + time) * uAmp.z - Math.pow(nsin(Math.PI * p * uFreq.w + time / (uFreq.z / uFreq.w)), 5) * uAmp.w;
+      const d = new THREE.Vector3(getX(progress) - getX(progress + 0.007), getY(progress) - getY(progress + 0.007), 0);
+      return d.multiply(new THREE.Vector3(-2, -5, 0)).add(new THREE.Vector3(0, 0, -10));
     },
   },
 };
@@ -158,11 +159,11 @@ class Road {
         }
       `,
       uniforms: {
-        uColor:   { value: new THREE.Color(color) },
-        uTime:    this.uTime,
+        uColor: { value: new THREE.Color(color) },
+        uTime: this.uTime,
         fogColor: { value: new THREE.Color(opts.colors.background) },
-        fogNear:  { value: opts.length * 0.2 },
-        fogFar:   { value: opts.length * 500 },
+        fogNear: { value: opts.length * 0.2 },
+        fogFar: { value: opts.length * 500 },
         ...DISTORTIONS.turbulentDistortion.uniforms,
       },
       side: THREE.FrontSide,
@@ -176,8 +177,8 @@ class Road {
     return mesh;
   }
   init() {
-    this.leftRoadWay  = this.createPlane(-1, this.options.roadWidth, true);
-    this.rightRoadWay = this.createPlane(1,  this.options.roadWidth, true);
+    this.leftRoadWay = this.createPlane(-1, this.options.roadWidth, true);
+    this.rightRoadWay = this.createPlane(1, this.options.roadWidth, true);
     this.createPlane(0, this.options.islandWidth, false);
   }
   update(time: number) {
@@ -194,8 +195,8 @@ class CarLights {
   }
   init() {
     const opts = this.options;
-    const curve   = new THREE.LineCurve3(new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-1));
-    const geo     = new THREE.TubeGeometry(curve, 40, 1, 8, false);
+    const curve = new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1));
+    const geo = new THREE.TubeGeometry(curve, 40, 1, 8, false);
     const instanced = new THREE.InstancedBufferGeometry().copy(geo as any);
     instanced.instanceCount = opts.lightPairsPerRoadWay * 2;
     const laneWidth = opts.roadWidth / opts.lanesPerRoad;
@@ -206,21 +207,21 @@ class CarLights {
     for (let i = 0; i < opts.lightPairsPerRoadWay; i++) {
       const radius = randomRange(opts.carLightsRadius);
       const length = randomRange(opts.carLightsLength);
-      const speed  = randomRange(this.speed);
+      const speed = randomRange(this.speed);
       const carLane = i % opts.lanesPerRoad;
       let laneX = carLane * laneWidth - opts.roadWidth / 2 + laneWidth / 2;
       laneX += randomRange(opts.carShiftX) * laneWidth;
       const offsetY = randomRange(opts.carFloorSeparation) + radius * 1.3;
       const offsetZ = -randomRange(opts.length);
       const carWidth = randomRange(opts.carWidthPercentage) * laneWidth;
-      aOffset.push(laneX - carWidth/2, offsetY, offsetZ, laneX + carWidth/2, offsetY, offsetZ);
+      aOffset.push(laneX - carWidth / 2, offsetY, offsetZ, laneX + carWidth / 2, offsetY, offsetZ);
       aMetrics.push(radius, length, speed, radius, length, speed);
       const c = pickRandom(colors) as THREE.Color;
       aColor.push(c.r, c.g, c.b, c.r, c.g, c.b);
     }
-    instanced.setAttribute("aOffset",  new THREE.InstancedBufferAttribute(new Float32Array(aOffset),  3, false));
+    instanced.setAttribute("aOffset", new THREE.InstancedBufferAttribute(new Float32Array(aOffset), 3, false));
     instanced.setAttribute("aMetrics", new THREE.InstancedBufferAttribute(new Float32Array(aMetrics), 3, false));
-    instanced.setAttribute("aColor",   new THREE.InstancedBufferAttribute(new Float32Array(aColor),   3, false));
+    instanced.setAttribute("aColor", new THREE.InstancedBufferAttribute(new Float32Array(aColor), 3, false));
     const material = new THREE.ShaderMaterial({
       fragmentShader: `
         varying vec3 vColor;
@@ -265,9 +266,9 @@ class CarLights {
         }
       `,
       uniforms: {
-        uTime:         { value: 0 },
+        uTime: { value: 0 },
         uTravelLength: { value: opts.length },
-        uFade:         { value: this.fade },
+        uFade: { value: this.fade },
         ...DISTORTIONS.turbulentDistortion.uniforms,
       },
       transparent: true,
@@ -299,9 +300,9 @@ class LightsSticks {
       const c = new THREE.Color(opts.colors.sticks);
       aColor.push(c.r, c.g, c.b);
     }
-    instanced.setAttribute("aOffset",  new THREE.InstancedBufferAttribute(new Float32Array(aOffset),  3, false));
+    instanced.setAttribute("aOffset", new THREE.InstancedBufferAttribute(new Float32Array(aOffset), 3, false));
     instanced.setAttribute("aMetrics", new THREE.InstancedBufferAttribute(new Float32Array(aMetrics), 1, false));
-    instanced.setAttribute("aColor",   new THREE.InstancedBufferAttribute(new Float32Array(aColor),   3, false));
+    instanced.setAttribute("aColor", new THREE.InstancedBufferAttribute(new Float32Array(aColor), 3, false));
     const mat = new THREE.ShaderMaterial({
       fragmentShader: `
         varying vec3 vColor;
@@ -331,7 +332,7 @@ class LightsSticks {
         }
       `,
       uniforms: {
-        uTime:         { value: 0 },
+        uTime: { value: 0 },
         uTravelLength: { value: opts.length },
         ...DISTORTIONS.turbulentDistortion.uniforms,
       },
@@ -358,7 +359,7 @@ class HyperspeedApp {
 
   constructor(container: HTMLElement) {
     this.container = container;
-    this.options   = OPTS;
+    this.options = OPTS;
     this.fovTarget = OPTS.fov;
 
     const w = Math.max(1, container.offsetWidth);
@@ -377,10 +378,10 @@ class HyperspeedApp {
     this.scene.fog = new THREE.Fog(OPTS.colors.background, OPTS.length * 0.2, OPTS.length * 500);
     this.clock = new THREE.Clock();
 
-    this.road            = new Road(this, OPTS);
-    this.leftCarLights   = new CarLights(this, OPTS, OPTS.colors.leftCars,  OPTS.movingAwaySpeed,   new THREE.Vector2(0, 1 - OPTS.carLightsFade));
-    this.rightCarLights  = new CarLights(this, OPTS, OPTS.colors.rightCars, OPTS.movingCloserSpeed, new THREE.Vector2(1, 0 + OPTS.carLightsFade));
-    this.leftSticks      = new LightsSticks(this, OPTS);
+    this.road = new Road(this, OPTS);
+    this.leftCarLights = new CarLights(this, OPTS, OPTS.colors.leftCars, OPTS.movingAwaySpeed, new THREE.Vector2(0, 1 - OPTS.carLightsFade));
+    this.rightCarLights = new CarLights(this, OPTS, OPTS.colors.rightCars, OPTS.movingCloserSpeed, new THREE.Vector2(1, 0 + OPTS.carLightsFade));
+    this.leftSticks = new LightsSticks(this, OPTS);
 
     if (w > 0 && h > 0) this.hasValidSize = true;
 
@@ -402,11 +403,11 @@ class HyperspeedApp {
   async init() {
     // Passes
     const renderPass = new RenderPass(this.scene, this.camera);
-    const bloomPass  = new EffectPass(this.camera, new BloomEffect({ luminanceThreshold: 0.15, luminanceSmoothing: 0, resolutionScale: 1 }));
-    const smaaPass   = new EffectPass(this.camera, new SMAAEffect({ preset: SMAAPreset.MEDIUM, searchImage: SMAAEffect.searchImageDataURL as any, areaImage: SMAAEffect.areaImageDataURL as any }));
+    const bloomPass = new EffectPass(this.camera, new BloomEffect({ luminanceThreshold: 0.15, luminanceSmoothing: 0, resolutionScale: 1 }));
+    const smaaPass = new EffectPass(this.camera, new SMAAEffect({ preset: SMAAPreset.MEDIUM }));
     renderPass.renderToScreen = false;
-    bloomPass.renderToScreen  = false;
-    smaaPass.renderToScreen   = true;
+    bloomPass.renderToScreen = false;
+    smaaPass.renderToScreen = true;
     this.composer.addPass(renderPass);
     this.composer.addPass(bloomPass);
     this.composer.addPass(smaaPass);
@@ -414,11 +415,11 @@ class HyperspeedApp {
     // Scene objects
     this.road.init();
     this.leftCarLights.init();
-    this.leftCarLights.mesh.position.setX(-OPTS.roadWidth/2 - OPTS.islandWidth/2);
+    this.leftCarLights.mesh.position.setX(-OPTS.roadWidth / 2 - OPTS.islandWidth / 2);
     this.rightCarLights.init();
-    this.rightCarLights.mesh.position.setX(OPTS.roadWidth/2 + OPTS.islandWidth/2);
+    this.rightCarLights.mesh.position.setX(OPTS.roadWidth / 2 + OPTS.islandWidth / 2);
     this.leftSticks.init();
-    this.leftSticks.mesh.position.setX(-(OPTS.roadWidth + OPTS.islandWidth/2));
+    this.leftSticks.mesh.position.setX(-(OPTS.roadWidth + OPTS.islandWidth / 2));
 
     this.tick();
   }
@@ -482,7 +483,7 @@ class HyperspeedApp {
 // ─── React component ──────────────────────────────────────────────────────────
 export function Hyperspeed({ style }: { style?: React.CSSProperties }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const appRef       = useRef<HyperspeedApp | null>(null);
+  const appRef = useRef<HyperspeedApp | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
