@@ -17,7 +17,7 @@ export function AICopilot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "👋 I'm KubeGraph Sentinel Copilot. I have full visibility into your cluster topology, active incidents, RBAC relationships, and attack paths.\n\nAsk me anything about your infrastructure.",
+      content: "Ask me anything",
     },
   ]);
   const [input, setInput] = useState("");
