@@ -17,8 +17,8 @@ export function Navbar() {
   return (
     <nav style={{
       height: "var(--nav-height, 52px)",
-      background: "#0B1020",
-      borderBottom: "1px solid var(--border, #1E293B)",
+      background: "var(--bg-base)",
+      borderBottom: "1px solid var(--border)",
       display: "flex",
       alignItems: "center",
       padding: "0 20px",
@@ -32,7 +32,7 @@ export function Navbar() {
         <div style={{
           width: 28,
           height: 28,
-          borderRadius: 6,
+          borderRadius: 0,
           background: "var(--accent, #38BDF8)",
           display: "flex",
           alignItems: "center",
@@ -71,7 +71,7 @@ export function Navbar() {
             <Link key={n.href} href={n.href} style={{ textDecoration: "none" }}>
               <div style={{
                 padding: "5px 12px",
-                borderRadius: 6,
+                borderRadius: 0,
                 fontSize: 12,
                 fontWeight: active ? 600 : 500,
                 display: "flex",
@@ -99,7 +99,7 @@ export function Navbar() {
           alignItems: "center",
           gap: 6,
           padding: "4px 10px",
-          borderRadius: 5,
+          borderRadius: 0,
           background: "rgba(16,185,129,0.08)",
           border: "1px solid rgba(16,185,129,0.18)",
         }}>

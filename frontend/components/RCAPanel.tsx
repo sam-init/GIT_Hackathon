@@ -81,15 +81,15 @@ function CopyButton({ text }: { text: string }) {
         right: 10,
         transform: "translateY(-50%)",
         padding: "3px 8px",
-        borderRadius: 4,
+        borderRadius: 0,
         fontSize: 9,
         fontWeight: 600,
         cursor: "pointer",
         fontFamily: "Inter, sans-serif",
         letterSpacing: "0.04em",
         transition: "all 0.15s ease",
-        border: copied ? "1px solid rgba(16,185,129,0.35)" : "1px solid #1E293B",
-        background: copied ? "rgba(16,185,129,0.1)" : "rgba(30,41,59,0.8)",
+        border: copied ? "1px solid rgba(16,185,129,0.35)" : "1px solid var(--border)",
+        background: copied ? "rgba(16,185,129,0.1)" : "rgba(20,20,20,0.95)",
         color: copied ? "#6EE7B7" : "#64748B",
         opacity: 1,
       }}
@@ -101,7 +101,7 @@ function CopyButton({ text }: { text: string }) {
       }}
       onMouseLeave={(e) => {
         if (!copied) {
-          e.currentTarget.style.borderColor = "#1E293B";
+          e.currentTarget.style.borderColor = "var(--border)";
           e.currentTarget.style.color = "#64748B";
         }
       }}
@@ -126,7 +126,7 @@ export function RCAPanel({ rca, severity }: { rca: RCA; severity: string }) {
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
         <div style={{
           padding: "16px 18px",
-          borderRadius: 8,
+          borderRadius: 0,
           background: bg,
           border: `1px solid ${border}`,
         }}>
@@ -141,12 +141,12 @@ export function RCAPanel({ rca, severity }: { rca: RCA; severity: string }) {
               <span style={{ fontSize: 10, color: "#64748B", fontWeight: 500 }}>AI Confidence</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: confColor }}>{conf}%</span>
             </div>
-            <div style={{ height: 3, borderRadius: 2, background: "#1E293B", overflow: "hidden" }}>
+            <div style={{ height: 3, borderRadius: 0, background: "var(--border)", overflow: "hidden" }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${conf}%` }}
                 transition={{ duration: 0.7, ease: "easeOut" }}
-                style={{ height: "100%", borderRadius: 2, background: confColor }}
+                style={{ height: "100%", borderRadius: 0, background: confColor }}
               />
             </div>
           </div>
@@ -173,7 +173,7 @@ export function RCAPanel({ rca, severity }: { rca: RCA; severity: string }) {
                 <div style={{
                   width: 4,
                   height: 4,
-                  borderRadius: "50%",
+                  borderRadius: 0,
                   background: "#F59E0B",
                   flexShrink: 0,
                   marginTop: 6,
@@ -193,7 +193,7 @@ export function RCAPanel({ rca, severity }: { rca: RCA; severity: string }) {
             {rca.affected_services.map((s) => (
               <span key={s} style={{
                 padding: "3px 9px",
-                borderRadius: 4,
+                borderRadius: 0,
                 fontSize: 11,
                 fontWeight: 500,
                 background: "rgba(239,68,68,0.08)",
@@ -218,7 +218,7 @@ export function RCAPanel({ rca, severity }: { rca: RCA; severity: string }) {
                 <div style={{
                   width: 20,
                   height: 20,
-                  borderRadius: 5,
+                  borderRadius: 0,
                   background: "rgba(16,185,129,0.1)",
                   border: "1px solid rgba(16,185,129,0.22)",
                   color: "#10B981",
@@ -251,26 +251,26 @@ export function RCAPanel({ rca, severity }: { rca: RCA; severity: string }) {
           </div>
 
           <div style={{
-            borderRadius: 8,
+            borderRadius: 0,
             overflow: "hidden",
-            border: "1px solid #1E293B",
-            background: "#0B1020",
+            border: "1px solid var(--border)",
+            background: "var(--bg-base)",
           }}>
             {rca.kubectl_commands.map((cmd, i) => (
               <div
                 key={i}
                 style={{
                   padding: "10px 14px",
-                  background: i % 2 === 0 ? "#0B1020" : "#0F172A",
-                  borderBottom: i < rca.kubectl_commands.length - 1 ? "1px solid #1E293B" : "none",
+                  background: i % 2 === 0 ? "var(--bg-base)" : "var(--bg-input)",
+                  borderBottom: i < rca.kubectl_commands.length - 1 ? "1px solid var(--border)" : "none",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                   position: "relative",
                   transition: "background 0.12s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#111827"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = i % 2 === 0 ? "#0B1020" : "#0F172A"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-panel)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = i % 2 === 0 ? "var(--bg-base)" : "var(--bg-input)"; }}
               >
                 {/* Prompt symbol */}
                 <span style={{
@@ -329,14 +329,14 @@ function CopyAllButton({ commands }: { commands: string[] }) {
       onClick={handleCopyAll}
       style={{
         padding: "3px 9px",
-        borderRadius: 4,
+        borderRadius: 0,
         fontSize: 9,
         fontWeight: 600,
         cursor: "pointer",
         fontFamily: "Inter, sans-serif",
         letterSpacing: "0.04em",
         transition: "all 0.15s ease",
-        border: copied ? "1px solid rgba(16,185,129,0.35)" : "1px solid #1E293B",
+        border: copied ? "1px solid rgba(16,185,129,0.35)" : "1px solid var(--border)",
         background: copied ? "rgba(16,185,129,0.1)" : "transparent",
         color: copied ? "#6EE7B7" : "#64748B",
         marginBottom: 2,

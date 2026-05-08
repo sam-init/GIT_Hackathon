@@ -47,7 +47,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 function MetricCard({ value, label, sub }: { value: string; label: string; sub?: string }) {
   return (
-    <div style={{ padding: "14px 18px", borderRadius: 8, background: "rgba(17,24,39,0.75)", border: "1px solid rgba(56,189,248,0.13)", backdropFilter: "blur(10px)", minWidth: 126 }}>
+    <div style={{ padding: "14px 18px", borderRadius: 0, background: "rgba(13,13,13,0.92)", border: "1px solid rgba(56,189,248,0.13)", backdropFilter: "blur(10px)", minWidth: 126 }}>
       <div style={{ fontSize: 24, fontWeight: 800, color: "#38BDF8", letterSpacing: "-0.02em", lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 10, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 5 }}>{label}</div>
       {sub && <div style={{ fontSize: 9, color: "#334155", marginTop: 2 }}>{sub}</div>}
@@ -63,9 +63,9 @@ function RCACard() {
     "kubectl describe pod auth-service-7d4b9c-xk2p -n default",
   ];
   return (
-    <div style={{ background: "#111827", border: "1px solid #1E293B", borderRadius: 10, overflow: "hidden" }}>
-      <div style={{ padding: "11px 16px", borderBottom: "1px solid #1E293B", display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF4444", flexShrink: 0 }} />
+    <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border)", borderRadius: 0, overflow: "hidden" }}>
+      <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 6, height: 6, borderRadius: 0, background: "#EF4444", flexShrink: 0 }} />
         <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.09em", textTransform: "uppercase" }}>AI Root Cause Analysis</span>
         <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#10B981" }}>92% Confidence</span>
       </div>
@@ -76,13 +76,13 @@ function RCACard() {
         </div>
         <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
           {["auth-service", "frontend-service", "payment-service", "order-service"].map(s => (
-            <span key={s} style={{ padding: "2px 7px", borderRadius: 4, fontSize: 9, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#F87171", fontFamily: "monospace" }}>{s}</span>
+            <span key={s} style={{ padding: "2px 7px", borderRadius: 0, fontSize: 9, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#F87171", fontFamily: "monospace" }}>{s}</span>
           ))}
         </div>
         <div style={{ fontSize: 9, fontWeight: 700, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>kubectl Commands</div>
-        <div style={{ background: "#0B1020", borderRadius: 6, border: "1px solid #1E293B", overflow: "hidden" }}>
+        <div style={{ background: "var(--bg-base)", borderRadius: 0, border: "1px solid var(--border)", overflow: "hidden" }}>
           {cmds.map((cmd, i) => (
-            <div key={i} style={{ padding: "7px 12px", borderBottom: i < cmds.length - 1 ? "1px solid #1E293B" : "none", display: "flex", gap: 8 }}>
+            <div key={i} style={{ padding: "7px 12px", borderBottom: i < cmds.length - 1 ? "1px solid var(--border)" : "none", display: "flex", gap: 8 }}>
               <span style={{ color: "#334155", fontFamily: "monospace", fontSize: 10, flexShrink: 0 }}>$</span>
               <span style={{ color: "#94A3B8", fontFamily: "monospace", fontSize: 10 }}>{cmd}</span>
             </div>
@@ -107,11 +107,11 @@ function ArchPipeline() {
       {steps.map((s, i) => (
         <div key={s.label} style={{ display: "flex", alignItems: "center" }}>
           <div className="arch-step" style={{ textAlign: "center", padding: "14px 18px" }}>
-            <div style={{ width: 42, height: 42, borderRadius: 10, background: "#111827", border: "1px solid #1E293B", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, color: "#38BDF8", margin: "0 auto 9px" }}>{s.icon}</div>
+            <div style={{ width: 42, height: 42, borderRadius: 0, background: "var(--bg-panel)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, color: "#38BDF8", margin: "0 auto 9px" }}>{s.icon}</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: "#E2E8F0" }}>{s.label}</div>
             <div style={{ fontSize: 10, color: "#475569", marginTop: 2 }}>{s.sub}</div>
           </div>
-          {i < steps.length - 1 && <div style={{ color: "#1E293B", fontSize: 16, padding: "0 2px", flexShrink: 0 }}>→</div>}
+          {i < steps.length - 1 && <div style={{ color: "var(--border-medium)", fontSize: 16, padding: "0 2px", flexShrink: 0 }}>→</div>}
         </div>
       ))}
     </div>
@@ -135,7 +135,7 @@ export default function LandingPage() {
   ]);
 
   return (
-    <div style={{ background: "#0B1020", color: "#E2E8F0", fontFamily: "Inter, -apple-system, sans-serif", overflowX: "hidden" }}>
+    <div style={{ background: "var(--bg-base)", color: "#E2E8F0", fontFamily: "Inter, -apple-system, sans-serif", overflowX: "hidden" }}>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <section style={{ position: "relative", height: "100vh", minHeight: 620, display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -145,28 +145,28 @@ export default function LandingPage() {
         </div>
 
         {/* Readability overlay */}
-        <div style={{ position: "absolute", inset: 0, zIndex: 1, background: "linear-gradient(to bottom, rgba(11,16,32,0.72) 0%, rgba(11,16,32,0.48) 35%, rgba(11,16,32,0.82) 80%, #0B1020 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, zIndex: 1, background: "linear-gradient(to bottom, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.52) 35%, rgba(0,0,0,0.88) 80%, #000000 100%)" }} />
 
         {/* Nav */}
         <nav style={{ position: "relative", zIndex: 10, height: 52, padding: "0 28px", display: "flex", alignItems: "center", borderBottom: "1px solid rgba(30,41,59,0.45)", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div style={{ width: 27, height: 27, borderRadius: 6, background: "#38BDF8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#0F172A", fontWeight: 800 }}>⬡</div>
+            <div style={{ width: 27, height: 27, borderRadius: 0, background: "#38BDF8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#0a0a0a", fontWeight: 800 }}>⬡</div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0" }}>KubeGraph <span style={{ color: "#38BDF8" }}>Sentinel</span></div>
               <div style={{ fontSize: 8, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase" }}>AI Incident Intelligence</div>
             </div>
           </div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-            <Link href="/" style={{ padding: "5px 13px", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#64748B", textDecoration: "none" }}>Dashboard</Link>
-            <Link href="/incidents" style={{ padding: "5px 13px", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#64748B", textDecoration: "none" }}>Incidents</Link>
-            <Link href="/" style={{ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, color: "#0F172A", textDecoration: "none", background: "#38BDF8" }}>Launch →</Link>
+            <Link href="/" style={{ padding: "5px 13px", borderRadius: 0, fontSize: 12, fontWeight: 600, color: "#64748B", textDecoration: "none" }}>Dashboard</Link>
+            <Link href="/incidents" style={{ padding: "5px 13px", borderRadius: 0, fontSize: 12, fontWeight: 600, color: "#64748B", textDecoration: "none" }}>Incidents</Link>
+            <Link href="/" style={{ padding: "5px 14px", borderRadius: 0, fontSize: 12, fontWeight: 700, color: "#0a0a0a", textDecoration: "none", background: "#38BDF8" }}>Launch →</Link>
           </div>
         </nav>
 
         {/* Hero content */}
         <div style={{ position: "relative", zIndex: 10, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", textAlign: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 13px", borderRadius: 20, background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", marginBottom: 26 }}>
-            <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#38BDF8" }} />
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 13px", borderRadius: 0, background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", marginBottom: 26 }}>
+            <div style={{ width: 5, height: 5, borderRadius: 0, background: "#38BDF8" }} />
             <span style={{ fontSize: 10, fontWeight: 600, color: "#38BDF8", letterSpacing: "0.08em" }}>KUBERNETES INCIDENT INTELLIGENCE PLATFORM</span>
           </div>
 
@@ -179,10 +179,10 @@ export default function LandingPage() {
           </p>
 
           <div style={{ display: "flex", gap: 11, flexWrap: "wrap", justifyContent: "center", marginBottom: 48 }}>
-            <Link href="/" style={{ padding: "11px 24px", borderRadius: 8, fontSize: 13, fontWeight: 700, color: "#0F172A", textDecoration: "none", background: "#38BDF8", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Link href="/" style={{ padding: "11px 24px", borderRadius: 0, fontSize: 13, fontWeight: 700, color: "#0a0a0a", textDecoration: "none", background: "#38BDF8", display: "inline-flex", alignItems: "center", gap: 6 }}>
               Launch Platform <span>→</span>
             </Link>
-            <a href="#architecture" style={{ padding: "11px 22px", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#94A3B8", textDecoration: "none", background: "rgba(15,23,42,0.55)", border: "1px solid #1E293B", backdropFilter: "blur(10px)" }}>
+            <a href="#architecture" style={{ padding: "11px 22px", borderRadius: 0, fontSize: 13, fontWeight: 600, color: "#94A3B8", textDecoration: "none", background: "rgba(10,10,10,0.85)", border: "1px solid var(--border)", backdropFilter: "blur(10px)" }}>
               View Architecture
             </a>
           </div>
@@ -198,8 +198,8 @@ export default function LandingPage() {
 
         {/* Scroll cue */}
         <div style={{ position: "relative", zIndex: 10, textAlign: "center", paddingBottom: 22, flexShrink: 0 }}>
-          <div style={{ fontSize: 9, color: "#1E293B", letterSpacing: "0.1em", textTransform: "uppercase" }}>Scroll</div>
-          <div style={{ fontSize: 14, color: "#1E293B", marginTop: 3 }}>↓</div>
+          <div style={{ fontSize: 9, color: "#404040", letterSpacing: "0.1em", textTransform: "uppercase" }}>Scroll</div>
+          <div style={{ fontSize: 14, color: "#404040", marginTop: 3 }}>↓</div>
         </div>
       </section>
 
@@ -216,7 +216,7 @@ export default function LandingPage() {
             { stat: "4+",   label: "Teams involved per major outage",  desc: "Platform, app, data, network" },
             { stat: "73%",  label: "Incidents with cascading impact",  desc: "A single failure ripples downstream" },
           ].map(c => (
-            <div key={c.label} className="reveal" style={{ padding: "20px 22px", borderRadius: 8, background: "#111827", border: "1px solid #1E293B" }}>
+            <div key={c.label} className="reveal" style={{ padding: "20px 22px", borderRadius: 0, background: "var(--bg-panel)", border: "1px solid var(--border)" }}>
               <div style={{ fontSize: 26, fontWeight: 800, color: "#38BDF8", letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 6 }}>{c.stat}</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>{c.label}</div>
               <div style={{ fontSize: 11, color: "#64748B", lineHeight: 1.5 }}>{c.desc}</div>
@@ -230,7 +230,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── GRAPH VISIBILITY ─────────────────────────────────────────── */}
-      <section ref={graphRef as any} style={{ padding: "80px 24px", background: "#0F172A", borderTop: "1px solid #1E293B", borderBottom: "1px solid #1E293B" }}>
+      <section ref={graphRef as any} style={{ padding: "80px 24px", background: "var(--bg-primary)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 52 }}>
             <Eyebrow>Graph-Native Visibility</Eyebrow>
@@ -247,7 +247,7 @@ export default function LandingPage() {
               { icon: "◉", title: "Failure Propagation",   desc: "Watch failures cascade in real time. Understand exactly which services are downstream." },
               { icon: "◈", title: "Blast Radius Analysis", desc: "Know the full scope of impact within seconds of detection — before remediation begins." },
             ].map(f => (
-              <div key={f.title} className="reveal" style={{ padding: "22px 20px", borderRadius: 8, background: "#111827", border: "1px solid #1E293B" }}>
+              <div key={f.title} className="reveal" style={{ padding: "22px 20px", borderRadius: 0, background: "var(--bg-panel)", border: "1px solid var(--border)" }}>
                 <div style={{ fontSize: 22, color: "#38BDF8", marginBottom: 13 }}>{f.icon}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", marginBottom: 7 }}>{f.title}</div>
                 <div style={{ fontSize: 12, color: "#64748B", lineHeight: 1.65 }}>{f.desc}</div>
@@ -275,7 +275,7 @@ export default function LandingPage() {
               "Blast radius and service impact map",
             ].map(f => (
               <div key={f} className="reveal" style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9 }}>
-                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#38BDF8", flexShrink: 0 }} />
+                <div style={{ width: 5, height: 5, borderRadius: 0, background: "#38BDF8", flexShrink: 0 }} />
                 <span style={{ fontSize: 13, color: "#94A3B8" }}>{f}</span>
               </div>
             ))}
@@ -285,7 +285,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── ARCHITECTURE ─────────────────────────────────────────────── */}
-      <section ref={archRef as any} id="architecture" style={{ padding: "80px 24px", background: "#0F172A", borderTop: "1px solid #1E293B", borderBottom: "1px solid #1E293B" }}>
+      <section ref={archRef as any} id="architecture" style={{ padding: "80px 24px", background: "var(--bg-primary)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
           <Eyebrow>Architecture</Eyebrow>
           <h2 style={{ fontSize: "clamp(20px, 2.8vw, 34px)", fontWeight: 800, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 12 }}>
@@ -309,10 +309,10 @@ export default function LandingPage() {
             Launch the platform and start correlating your Kubernetes failures in real time.
           </p>
           <div className="reveal" style={{ display: "flex", gap: 11, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/" style={{ padding: "12px 30px", borderRadius: 8, fontSize: 14, fontWeight: 700, color: "#0F172A", textDecoration: "none", background: "#38BDF8", display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <Link href="/" style={{ padding: "12px 30px", borderRadius: 0, fontSize: 14, fontWeight: 700, color: "#0a0a0a", textDecoration: "none", background: "#38BDF8", display: "inline-flex", alignItems: "center", gap: 7 }}>
               Launch Platform <span>→</span>
             </Link>
-            <Link href="/incidents" style={{ padding: "12px 26px", borderRadius: 8, fontSize: 14, fontWeight: 600, color: "#64748B", textDecoration: "none", background: "#111827", border: "1px solid #1E293B" }}>
+            <Link href="/incidents" style={{ padding: "12px 26px", borderRadius: 0, fontSize: 14, fontWeight: 600, color: "#64748B", textDecoration: "none", background: "var(--bg-panel)", border: "1px solid var(--border)" }}>
               View Incidents
             </Link>
           </div>
@@ -320,7 +320,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer style={{ borderTop: "1px solid #1E293B", padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <footer style={{ borderTop: "1px solid var(--border)", padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ fontSize: 11, color: "#334155" }}>KubeGraph Sentinel — AI Kubernetes Incident Intelligence</div>
         <div style={{ fontSize: 11, color: "#334155" }}>HTF 2026</div>
       </footer>

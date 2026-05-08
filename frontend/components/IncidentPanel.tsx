@@ -34,7 +34,7 @@ export function IncidentPanel({ incidents }: { incidents: Incident[] }) {
       {/* Header */}
       <div style={{
         padding: "13px 16px",
-        borderBottom: "1px solid #1E293B",
+        borderBottom: "1px solid var(--border)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -59,7 +59,7 @@ export function IncidentPanel({ incidents }: { incidents: Incident[] }) {
             background: "rgba(239,68,68,0.1)",
             border: "1px solid rgba(239,68,68,0.22)",
             color: "#F87171",
-            borderRadius: 4,
+            borderRadius: 0,
             padding: "2px 8px",
             fontSize: 11,
             fontWeight: 700,
@@ -92,18 +92,18 @@ export function IncidentPanel({ incidents }: { incidents: Incident[] }) {
                   style={{
                     margin: "3px 10px",
                     padding: "11px 13px",
-                    borderRadius: 7,
-                    background: "#111827",
+                    borderRadius: 0,
+                    background: "var(--bg-panel)",
                     border: `1px solid ${SEV_COLOR[inc.severity] || "#1E293B"}1A`,
                     cursor: "pointer",
                     transition: "all 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#1E293B";
+                    e.currentTarget.style.background = "var(--bg-panel-hover)";
                     e.currentTarget.style.borderColor = `${SEV_COLOR[inc.severity] || "#38BDF8"}30`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#111827";
+                    e.currentTarget.style.background = "var(--bg-panel)";
                     e.currentTarget.style.borderColor = `${SEV_COLOR[inc.severity] || "#1E293B"}1A`;
                   }}
                 >
@@ -152,7 +152,7 @@ export function IncidentPanel({ incidents }: { incidents: Incident[] }) {
                       <div style={{
                         width: 5,
                         height: 5,
-                        borderRadius: "50%",
+                        borderRadius: 0,
                         background: STATUS_COLOR[inc.status] || "#6B7280",
                         flexShrink: 0,
                       }} />
@@ -195,7 +195,7 @@ export function IncidentPanel({ incidents }: { incidents: Incident[] }) {
                 <div style={{
                   margin: "2px 10px",
                   padding: "9px 13px",
-                  borderRadius: 7,
+                  borderRadius: 0,
                   background: "rgba(16,185,129,0.04)",
                   border: "1px solid rgba(16,185,129,0.1)",
                   opacity: 0.65,

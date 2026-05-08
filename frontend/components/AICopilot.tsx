@@ -48,13 +48,13 @@ const mdComponents = {
     inline ? (
       <code style={{
         background: "rgba(56,189,248,0.08)", color: "#38BDF8",
-        padding: "1px 5px", borderRadius: 3, fontSize: "0.88em",
+        padding: "1px 5px", borderRadius: 0, fontSize: "0.88em",
         fontFamily: "'JetBrains Mono', monospace",
       }}>{children}</code>
     ) : (
       <pre style={{
-        background: "#0B1020", border: "1px solid #1E293B",
-        borderRadius: 6, padding: "10px 14px", margin: "8px 0",
+        background: "var(--bg-base)", border: "1px solid var(--border)",
+        borderRadius: 0, padding: "10px 14px", margin: "8px 0",
         overflowX: "auto", fontSize: 11,
       }}>
         <code style={{ color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace", whiteSpace: "pre" }}>
@@ -75,12 +75,12 @@ const mdComponents = {
   ),
   th: ({ children }: any) => (
     <th style={{
-      border: "1px solid #1E293B", padding: "4px 10px",
-      background: "#111827", color: "#94A3B8", fontWeight: 700, textAlign: "left", fontSize: 10,
+      border: "1px solid var(--border)", padding: "4px 10px",
+      background: "var(--bg-panel)", color: "#94A3B8", fontWeight: 700, textAlign: "left", fontSize: 10,
     }}>{children}</th>
   ),
   td: ({ children }: any) => (
-    <td style={{ border: "1px solid #1E293B", padding: "4px 10px", color: "#CBD5E1" }}>{children}</td>
+    <td style={{ border: "1px solid var(--border)", padding: "4px 10px", color: "#CBD5E1" }}>{children}</td>
   ),
 };
 
@@ -97,7 +97,7 @@ function TypingDots() {
           style={{
             width: 4,
             height: 4,
-            borderRadius: "50%",
+            borderRadius: 0,
             background: "#38BDF8",
             animation: `typing-dot 1.2s ${i * 0.2}s ease-in-out infinite`,
           }}
@@ -144,7 +144,7 @@ export function AICopilot() {
       {/* Header */}
       <div style={{
         padding: "11px 16px",
-        borderBottom: "1px solid #1E293B",
+        borderBottom: "1px solid var(--border)",
         display: "flex",
         alignItems: "center",
         gap: 10,
@@ -152,7 +152,7 @@ export function AICopilot() {
         <div style={{
           width: 28,
           height: 28,
-          borderRadius: 6,
+          borderRadius: 0,
           background: "rgba(56,189,248,0.1)",
           border: "1px solid rgba(56,189,248,0.2)",
           display: "flex",
@@ -203,13 +203,13 @@ export function AICopilot() {
               <div style={{
                 maxWidth: "92%",
                 padding: "9px 13px",
-                borderRadius: msg.role === "user" ? "10px 10px 3px 10px" : "3px 10px 10px 10px",
+                borderRadius: 0,
                 background: msg.role === "user"
                   ? "rgba(56,189,248,0.08)"
-                  : "#111827",
+                  : "var(--bg-panel)",
                 border: msg.role === "user"
                   ? "1px solid rgba(56,189,248,0.2)"
-                  : "1px solid #1E293B",
+                  : "1px solid var(--border)",
                 fontSize: 12,
                 color: "#CBD5E1",
                 lineHeight: 1.65,
@@ -242,11 +242,11 @@ export function AICopilot() {
               onClick={() => send(s)}
               style={{
                 padding: "4px 9px",
-                borderRadius: 5,
+                borderRadius: 0,
                 fontSize: 10,
                 cursor: "pointer",
                 background: "transparent",
-                border: "1px solid #1E293B",
+                border: "1px solid var(--border)",
                 color: "#475569",
                 fontFamily: "inherit",
                 transition: "all 0.15s",
@@ -256,7 +256,7 @@ export function AICopilot() {
                 e.currentTarget.style.color = "#38BDF8";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#1E293B";
+                e.currentTarget.style.borderColor = "var(--border)";
                 e.currentTarget.style.color = "#475569";
               }}
             >
@@ -267,7 +267,7 @@ export function AICopilot() {
       )}
 
       {/* Input area */}
-      <div style={{ padding: "10px 12px", borderTop: "1px solid #1E293B" }}>
+      <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border)" }}>
         <div style={{ display: "flex", gap: 7 }}>
           <input
             value={input}
@@ -277,30 +277,30 @@ export function AICopilot() {
             style={{
               flex: 1,
               padding: "8px 12px",
-              borderRadius: 7,
+              borderRadius: 0,
               fontSize: 12,
-              background: "#0F172A",
-              border: "1px solid #1E293B",
+              background: "var(--bg-input)",
+              border: "1px solid var(--border)",
               color: "#E2E8F0",
               outline: "none",
               transition: "border-color 0.15s",
               fontFamily: "inherit",
             }}
             onFocus={(e) => { e.target.style.borderColor = "rgba(56,189,248,0.35)"; }}
-            onBlur={(e) => { e.target.style.borderColor = "#1E293B"; }}
+            onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
           />
           <button
             onClick={() => send()}
             disabled={loading || !input.trim()}
             style={{
               padding: "8px 14px",
-              borderRadius: 7,
+              borderRadius: 0,
               fontSize: 14,
               fontWeight: 700,
               cursor: "pointer",
               background: "#38BDF8",
               border: "none",
-              color: "#0F172A",
+              color: "#0a0a0a",
               opacity: loading || !input.trim() ? 0.35 : 1,
               transition: "opacity 0.15s",
               fontFamily: "inherit",

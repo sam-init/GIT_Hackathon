@@ -47,7 +47,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 
         {/* Left column: RCA + details */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px", background: "#0B1020" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px", background: "var(--bg-base)" }}>
 
           {/* Breadcrumb */}
           <Link href="/incidents" style={{
@@ -71,7 +71,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
               {incident.attack_path && (
                 <span style={{
                   padding: "2px 8px",
-                  borderRadius: 4,
+                  borderRadius: 0,
                   fontSize: 10,
                   fontWeight: 700,
                   background: "rgba(239,68,68,0.1)",
@@ -117,7 +117,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
           {incident.blast_radius?.length > 0 && (
             <div style={{
               padding: "14px 18px",
-              borderRadius: 8,
+              borderRadius: 0,
               marginBottom: 20,
               background: "rgba(239,68,68,0.05)",
               border: "1px solid rgba(239,68,68,0.18)",
@@ -136,7 +136,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
                 {incident.blast_radius.map((s: string) => (
                   <span key={s} style={{
                     padding: "3px 9px",
-                    borderRadius: 4,
+                    borderRadius: 0,
                     fontSize: 11,
                     fontWeight: 500,
                     background: "rgba(239,68,68,0.08)",
@@ -155,7 +155,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
           {incident.attack_path_detail && (
             <div style={{
               padding: "14px 18px",
-              borderRadius: 8,
+              borderRadius: 0,
               marginBottom: 20,
               background: "rgba(239,68,68,0.05)",
               border: "1px solid rgba(239,68,68,0.22)",
@@ -176,7 +176,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
                     <div style={{
                       width: 18,
                       height: 18,
-                      borderRadius: 4,
+                      borderRadius: 0,
                       background: "rgba(239,68,68,0.1)",
                       border: "1px solid rgba(239,68,68,0.22)",
                       color: "#F87171",
@@ -205,15 +205,15 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
           {/* RCA panel */}
           {incident.rca ? (
             <div style={{
-              borderRadius: 8,
-              border: "1px solid #1E293B",
-              background: "#111827",
+              borderRadius: 0,
+              border: "1px solid var(--border)",
+              background: "var(--bg-panel)",
               overflow: "hidden",
             }}>
               {/* RCA header */}
               <div style={{
                 padding: "12px 20px",
-                borderBottom: "1px solid #1E293B",
+                borderBottom: "1px solid var(--border)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -234,8 +234,8 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
           ) : (
             <div style={{
               padding: "36px",
-              borderRadius: 8,
-              border: "1px dashed #1E293B",
+              borderRadius: 0,
+              border: "1px dashed var(--border)",
               textAlign: "center",
             }}>
               <div style={{ fontSize: 28, color: "#334155", marginBottom: 10 }}>◌</div>
@@ -245,7 +245,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
               <form action={`${API}/incidents/${id}/analyze`} method="POST">
                 <button style={{
                   padding: "8px 20px",
-                  borderRadius: 6,
+                  borderRadius: 0,
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -265,18 +265,18 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
         {/* Right column: Timeline */}
         <div style={{
           width: 320,
-          borderLeft: "1px solid #1E293B",
+          borderLeft: "1px solid var(--border)",
           overflowY: "auto",
-          background: "#0F172A",
+          background: "var(--bg-secondary)",
           flexShrink: 0,
         }}>
           {/* Timeline header */}
           <div style={{
             padding: "16px 20px",
-            borderBottom: "1px solid #1E293B",
+            borderBottom: "1px solid var(--border)",
             position: "sticky",
             top: 0,
-            background: "#0F172A",
+            background: "var(--bg-secondary)",
             zIndex: 1,
           }}>
             <div style={{
@@ -296,7 +296,7 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
           {incident.telemetry && (
             <div style={{
               padding: "14px 20px",
-              borderTop: "1px solid #1E293B",
+              borderTop: "1px solid var(--border)",
             }}>
               <div style={{
                 fontSize: 9,
@@ -312,9 +312,9 @@ export default async function IncidentDetailPage({ params }: { params: Promise<{
                 fontSize: 10,
                 color: "#64748B",
                 fontFamily: "'JetBrains Mono', monospace",
-                background: "#0B1020",
-                border: "1px solid #1E293B",
-                borderRadius: 6,
+                background: "var(--bg-base)",
+                border: "1px solid var(--border)",
+                borderRadius: 0,
                 padding: 12,
                 overflowX: "auto",
                 lineHeight: 1.65,

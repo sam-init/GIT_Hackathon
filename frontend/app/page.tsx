@@ -33,8 +33,8 @@ export default async function HomePage() {
       {/* Stats bar */}
       <div style={{
         display: "flex",
-        borderBottom: "1px solid #1E293B",
-        background: "#0F172A",
+        borderBottom: "1px solid var(--border)",
+        background: "var(--bg-secondary)",
         flexShrink: 0,
       }}>
         {stats.map((s, i) => (
@@ -43,7 +43,7 @@ export default async function HomePage() {
             style={{
               flex: 1,
               padding: "10px 18px",
-              borderRight: i < stats.length - 1 ? "1px solid #1E293B" : "none",
+              borderRight: i < stats.length - 1 ? "1px solid var(--border)" : "none",
               display: "flex",
               flexDirection: "column",
               gap: 2,
@@ -81,16 +81,16 @@ export default async function HomePage() {
         {/* Right sidebar */}
         <div style={{
           width: 316,
-          borderLeft: "1px solid #1E293B",
+          borderLeft: "1px solid var(--border)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          background: "#0F172A",
+          background: "var(--bg-secondary)",
         }}>
           {/* Incidents — top 50% */}
           <div style={{
             flex: 1,
-            borderBottom: "1px solid #1E293B",
+            borderBottom: "1px solid var(--border)",
             overflowY: "auto",
             minHeight: 0,
           }}>

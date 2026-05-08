@@ -4,7 +4,7 @@ export default function CypherAIPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Navbar />
-      <div style={{ flex: 1, display: "flex", overflow: "hidden", background: "#0B1020" }}>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden", background: "var(--bg-base)" }}>
 
         {/* Content */}
         <div style={{
@@ -20,7 +20,7 @@ export default function CypherAIPage() {
           <div style={{
             width: 52,
             height: 52,
-            borderRadius: 12,
+            borderRadius: 0,
             background: "rgba(56,189,248,0.08)",
             border: "1px solid rgba(56,189,248,0.18)",
             display: "flex",
@@ -81,9 +81,9 @@ export default function CypherAIPage() {
             ].map((f) => (
               <div key={f.label} style={{
                 padding: "14px 16px",
-                borderRadius: 7,
-                background: "#111827",
-                border: "1px solid #1E293B",
+                borderRadius: 0,
+                background: "var(--bg-panel)",
+                border: "1px solid var(--border)",
                 textAlign: "left",
               }}>
                 <div style={{
@@ -106,14 +106,14 @@ export default function CypherAIPage() {
             alignItems: "center",
             gap: 6,
             padding: "5px 14px",
-            borderRadius: 5,
+            borderRadius: 0,
             background: "rgba(56,189,248,0.07)",
             border: "1px solid rgba(56,189,248,0.15)",
             fontSize: 11,
             fontWeight: 500,
             color: "#38BDF8",
           }}>
-            <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#38BDF8", animation: "status-pulse 2s ease-in-out infinite", display: "inline-block" }} />
+            <span style={{ width: 5, height: 5, borderRadius: 0, background: "#38BDF8", animation: "status-pulse 2s ease-in-out infinite", display: "inline-block" }} />
             Coming soon
           </div>
         </div>

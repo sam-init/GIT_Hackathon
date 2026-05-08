@@ -24,9 +24,9 @@ export function IncidentTable({ incidents }: { incidents: Incident[] }) {
           <div
             style={{
               padding: "13px 18px",
-              borderRadius: 8,
-              background: "#111827",
-              border: "1px solid #1E293B",
+              borderRadius: 0,
+              background: "var(--bg-panel)",
+              border: "1px solid var(--border)",
               display: "flex",
               alignItems: "center",
               gap: 14,
@@ -34,12 +34,12 @@ export function IncidentTable({ incidents }: { incidents: Incident[] }) {
               cursor: "pointer",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#1E293B";
-              e.currentTarget.style.borderColor = "#2D3F5B";
+              e.currentTarget.style.background = "var(--bg-panel-hover)";
+              e.currentTarget.style.borderColor = "var(--border-medium)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#111827";
-              e.currentTarget.style.borderColor = "#1E293B";
+              e.currentTarget.style.background = "var(--bg-panel)";
+              e.currentTarget.style.borderColor = "var(--border)";
             }}
           >
             {/* Severity badge */}
@@ -70,7 +70,7 @@ export function IncidentTable({ incidents }: { incidents: Incident[] }) {
               <div style={{
                 width: 5,
                 height: 5,
-                borderRadius: "50%",
+                borderRadius: 0,
                 background: STATUS_COLOR[inc.status] || "#6B7280",
                 flexShrink: 0,
               }} />

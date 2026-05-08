@@ -12,7 +12,7 @@ export default async function AttackPathsPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Navbar />
-      <div style={{ flex: 1, overflowY: "auto", background: "#0B1020" }}>
+      <div style={{ flex: 1, overflowY: "auto", background: "var(--bg-base)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
 
           {/* Page header */}
@@ -48,14 +48,14 @@ export default async function AttackPathsPage() {
                   flexShrink: 0,
                   background: "rgba(239,68,68,0.08)",
                   border: "1px solid rgba(239,68,68,0.22)",
-                  borderRadius: 6,
+                  borderRadius: 0,
                   padding: "6px 14px",
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
                 }}>
                   <div style={{
-                    width: 5, height: 5, borderRadius: "50%",
+                    width: 5, height: 5, borderRadius: 0,
                     background: "#EF4444",
                   }} />
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#F87171" }}>
@@ -71,9 +71,9 @@ export default async function AttackPathsPage() {
             <div style={{
               textAlign: "center",
               padding: "64px 24px",
-              background: "#111827",
-              borderRadius: 8,
-              border: "1px solid #1E293B",
+              background: "var(--bg-panel)",
+              borderRadius: 0,
+              border: "1px solid var(--border)",
             }}>
               <div style={{ fontSize: 36, color: "#10B981", marginBottom: 12 }}>✓</div>
               <div style={{ fontSize: 16, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>
@@ -89,9 +89,9 @@ export default async function AttackPathsPage() {
                 <div
                   key={i}
                   style={{
-                    borderRadius: 8,
+                    borderRadius: 0,
                     border: "1px solid rgba(239,68,68,0.22)",
-                    background: "#111827",
+                    background: "var(--bg-panel)",
                     overflow: "hidden",
                   }}
                 >
@@ -106,7 +106,7 @@ export default async function AttackPathsPage() {
                   }}>
                     <span style={{
                       padding: "3px 10px",
-                      borderRadius: 4,
+                      borderRadius: 0,
                       fontSize: 9,
                       fontWeight: 800,
                       letterSpacing: "0.07em",
@@ -159,12 +159,12 @@ export default async function AttackPathsPage() {
                               <div style={{
                                 width: 24,
                                 height: 24,
-                                borderRadius: 5,
+                                borderRadius: 0,
                                 flexShrink: 0,
                                 background: si === 0 || si === path.path.length - 1
                                   ? "rgba(239,68,68,0.12)"
-                                  : "#111827",
-                                border: `1px solid ${si === 0 || si === path.path.length - 1 ? "rgba(239,68,68,0.3)" : "#1E293B"}`,
+                                  : "var(--bg-panel)",
+                                border: `1px solid ${si === 0 || si === path.path.length - 1 ? "rgba(239,68,68,0.3)" : "var(--border)"}`,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -186,7 +186,7 @@ export default async function AttackPathsPage() {
                               <div style={{
                                 width: 1,
                                 height: 12,
-                                background: "#1E293B",
+                                background: "var(--border)",
                                 marginLeft: 11,
                               }} />
                             )}
@@ -212,7 +212,7 @@ export default async function AttackPathsPage() {
                           {path.accessible_secrets.map((s: string) => (
                             <div key={s} style={{
                               padding: "7px 12px",
-                              borderRadius: 6,
+                              borderRadius: 0,
                               background: "rgba(239,68,68,0.06)",
                               border: "1px solid rgba(239,68,68,0.18)",
                               fontSize: 11,
@@ -245,7 +245,7 @@ export default async function AttackPathsPage() {
                       </div>
                       <div style={{
                         padding: "8px 12px",
-                        borderRadius: 6,
+                        borderRadius: 0,
                         fontSize: 11,
                         background: "rgba(245,158,11,0.07)",
                         border: "1px solid rgba(245,158,11,0.2)",
@@ -266,15 +266,15 @@ export default async function AttackPathsPage() {
             <div style={{
               marginTop: 24,
               padding: "20px 24px",
-              borderRadius: 8,
-              background: "#111827",
-              border: "1px solid #1E293B",
+              borderRadius: 0,
+              background: "var(--bg-panel)",
+              border: "1px solid var(--border)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                 <div style={{
                   width: 24,
                   height: 24,
-                  borderRadius: 5,
+                  borderRadius: 0,
                   background: "rgba(56,189,248,0.1)",
                   border: "1px solid rgba(56,189,248,0.2)",
                   display: "flex",

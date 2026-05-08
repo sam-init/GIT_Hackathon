@@ -64,7 +64,7 @@ function buildRFEdges(edges: any[]) {
     },
     label: e.type,
     labelStyle: { fill: "#475569", fontSize: 8 },
-    labelBgStyle: { fill: "#0B1020", fillOpacity: 0.9 },
+    labelBgStyle: { fill: "#000000", fillOpacity: 0.92 },
   }));
 }
 
@@ -124,9 +124,9 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
         display: "flex",
         gap: 6,
         alignItems: "center",
-        background: "#111827",
-        border: "1px solid #1E293B",
-        borderRadius: 8,
+        background: "var(--bg-panel)",
+        border: "1px solid var(--border)",
+        borderRadius: 0,
         padding: "7px 12px",
       }}>
         {/* Label */}
@@ -148,14 +148,14 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
             onClick={() => setSelectedScenario(s.id)}
             style={{
               padding: "4px 10px",
-              borderRadius: 5,
+              borderRadius: 0,
               fontSize: 11,
               fontWeight: 500,
               cursor: "pointer",
               transition: "all 0.15s ease",
               border: selectedScenario === s.id
                 ? "1px solid rgba(239,68,68,0.35)"
-                : "1px solid #1E293B",
+                : "1px solid var(--border)",
               background: selectedScenario === s.id
                 ? "rgba(239,68,68,0.1)"
                 : "transparent",
@@ -168,7 +168,7 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
         ))}
 
         {/* Divider */}
-        <div style={{ width: 1, height: 16, background: "#1E293B", margin: "0 4px" }} />
+        <div style={{ width: 1, height: 16, background: "var(--border)", margin: "0 4px" }} />
 
         {/* Trigger button */}
         <button
@@ -176,7 +176,7 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
           disabled={simulating}
           style={{
             padding: "4px 12px",
-            borderRadius: 5,
+            borderRadius: 0,
             fontSize: 11,
             fontWeight: 600,
             cursor: simulating ? "not-allowed" : "pointer",
@@ -196,12 +196,12 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
           onClick={handleReset}
           style={{
             padding: "4px 10px",
-            borderRadius: 5,
+            borderRadius: 0,
             fontSize: 11,
             fontWeight: 500,
             cursor: "pointer",
             background: "transparent",
-            border: "1px solid #1E293B",
+            border: "1px solid var(--border)",
             color: "#64748B",
             transition: "all 0.15s",
             fontFamily: "inherit",
@@ -212,7 +212,7 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.color = "#64748B";
-            e.currentTarget.style.borderColor = "#1E293B";
+            e.currentTarget.style.borderColor = "var(--border)";
           }}
         >
           ↺ Reset
@@ -234,18 +234,18 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
       >
         <Background
           variant={BackgroundVariant.Dots}
-          color="#1E293B"
+          color="#333333"
           gap={28}
           size={1}
         />
-        <Controls style={{ background: "#111827", border: "1px solid #1E293B", borderRadius: 8 }} />
+        <Controls style={{ background: "var(--bg-panel)", border: "1px solid var(--border)", borderRadius: 0 }} />
         <MiniMap
-          style={{ background: "#0B1020", border: "1px solid #1E293B", borderRadius: 8 }}
+          style={{ background: "var(--bg-base)", border: "1px solid var(--border)", borderRadius: 0 }}
           nodeColor={(n) => {
             const s = n.data?.status;
             return s === "critical" ? "#EF4444" : s === "warning" ? "#F59E0B" : "#10B981";
           }}
-          maskColor="rgba(11,16,32,0.7)"
+          maskColor="rgba(0,0,0,0.65)"
         />
       </ReactFlow>
     </div>

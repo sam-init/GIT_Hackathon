@@ -21,16 +21,16 @@ export default async function IncidentsPage() {
         {/* Sidebar */}
         <div style={{
           width: 340,
-          borderRight: "1px solid #1E293B",
+          borderRight: "1px solid var(--border)",
           overflowY: "auto",
-          background: "#0F172A",
+          background: "var(--bg-secondary)",
           flexShrink: 0,
         }}>
           <IncidentPanel incidents={incidents} />
         </div>
 
         {/* Main content */}
-        <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto", background: "#0B1020" }}>
+        <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto", background: "var(--bg-base)" }}>
 
           {/* Page header */}
           <div style={{ marginBottom: 28 }}>
@@ -73,7 +73,7 @@ export default async function IncidentsPage() {
             ].map((s) => (
               <div key={s.label} style={{
                 padding: "18px 20px",
-                borderRadius: 8,
+                borderRadius: 0,
                 background: s.bg,
                 border: `1px solid ${s.border}`,
               }}>
