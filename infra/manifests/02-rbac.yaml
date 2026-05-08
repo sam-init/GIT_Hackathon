@@ -1,0 +1,86 @@
+# ServiceAccounts
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auth-sa
+  namespace: kubesentinel-demo
+  labels:
+    kubesentinel-node-id: sa-auth
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payment-sa
+  namespace: kubesentinel-demo
+  labels:
+    kubesentinel-node-id: sa-payment
+---
+# Scoped role for auth-sa (what it SHOULD have)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: auth-role
+  namespace: kubesentinel-data
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["postgres-credentials"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auth-role-binding
+  namespace: kubesentinel-data
+subjects:
+- kind: ServiceAccount
+  name: auth-sa
+  namespace: kubesentinel-demo
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: auth-role
+---
+# ⚠️  INTENTIONALLY OVER-PRIVILEGED — for attack path demo
+# auth-sa bound to cluster-admin — this is the attack path INC-005 detects
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: auth-sa-admin-binding
+  labels:
+    kubesentinel-risk: "critical"
+    kubesentinel-demo: "true"
+subjects:
+- kind: ServiceAccount
+  name: auth-sa
+  namespace: kubesentinel-demo
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: cluster-admin
+---
+# Payment SA — properly scoped
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: payment-role
+  namespace: kubesentinel-data
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["postgres-credentials", "api-keys-secret"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: payment-role-binding
+  namespace: kubesentinel-demo
+subjects:
+- kind: ServiceAccount
+  name: payment-sa
+  namespace: kubesentinel-demo
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: payment-role
