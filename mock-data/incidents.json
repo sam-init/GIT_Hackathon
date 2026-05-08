@@ -1,0 +1,276 @@
+[
+  {
+    "id": "inc-001",
+    "title": "auth-service CrashLoopBackOff",
+    "severity": "critical",
+    "status": "active",
+    "service": "auth-service",
+    "namespace": "default",
+    "started_at": "2026-05-08T10:02:00Z",
+    "detected_at": "2026-05-08T10:02:47Z",
+    "affected_nodes": ["auth-pod-1", "auth-pod-2", "auth-svc"],
+    "blast_radius": ["frontend-svc", "payment-svc", "order-svc", "admin-svc"],
+    "telemetry": {
+      "service": "auth-service",
+      "status": "CrashLoopBackOff",
+      "restart_count": 7,
+      "recent_deployment": true,
+      "deployment_time": "2026-05-08T10:00:00Z",
+      "logs_summary": "FATAL: dial tcp postgres:5432: connection refused\nFATAL: max_connections exceeded on postgresql-primary\npanic: runtime error: invalid memory address"
+    },
+    "timeline": [
+      { "time": "10:00:00", "event": "Deployment auth-service v2.4.1 rolled out", "type": "deployment" },
+      { "time": "10:01:12", "event": "PostgreSQL connection pool saturation detected (98/100)", "type": "warning" },
+      { "time": "10:02:00", "event": "auth-service-7d4b9c-xk2p entered CrashLoopBackOff", "type": "error" },
+      { "time": "10:02:33", "event": "auth-service-7d4b9c-m9nq entered CrashLoopBackOff", "type": "error" },
+      { "time": "10:03:01", "event": "login-api upstream auth failures began (503)", "type": "error" },
+      { "time": "10:03:45", "event": "payment-service auth validation failures (401)", "type": "warning" },
+      { "time": "10:04:10", "event": "admin-dashboard session invalidation cascade", "type": "warning" },
+      { "time": "10:04:47", "event": "KubeGraph Sentinel incident INC-001 created", "type": "detection" }
+    ],
+    "rca": {
+      "root_cause": "Database connection pool exhaustion triggered by auth-service v2.4.1 deployment introducing connection leak in PostgreSQL pool initializer.",
+      "evidence": [
+        "auth-service deployed at 10:00:00, crashes began 72 seconds later",
+        "PostgreSQL connection count hit 100/100 (max_connections) at 10:01:12",
+        "Crash logs show 'connection refused' on every startup attempt — service cannot acquire DB connection to initialize",
+        "No similar crashes in previous 14 days — deployment is the change event"
+      ],
+      "affected_services": ["auth-service", "frontend-service", "payment-service", "order-service", "admin-dashboard"],
+      "confidence_score": 94,
+      "remediation": [
+        "Immediately rollback auth-service to v2.4.0",
+        "Increase PostgreSQL max_connections to 200 in postgresql.conf",
+        "Add connection pool limits to auth-service config (max_pool_size: 20)",
+        "Implement exponential backoff on DB connection retry"
+      ],
+      "kubectl_commands": [
+        "kubectl rollout undo deployment/auth-service -n default",
+        "kubectl rollout status deployment/auth-service -n default",
+        "kubectl logs auth-service-7d4b9c-xk2p -n default --previous",
+        "kubectl exec -it postgresql-primary-0 -n data -- psql -U postgres -c 'SELECT count(*) FROM pg_stat_activity;'",
+        "kubectl describe pod auth-service-7d4b9c-xk2p -n default"
+      ],
+      "summary": "auth-service v2.4.1 deployment introduced a PostgreSQL connection leak causing pool exhaustion within 72 seconds, triggering CrashLoopBackOff across all auth pods and cascading authentication failures to 4 downstream services."
+    }
+  },
+  {
+    "id": "inc-002",
+    "title": "Redis Cluster Outage — Cache Layer Failure",
+    "severity": "high",
+    "status": "active",
+    "service": "redis-cluster",
+    "namespace": "data",
+    "started_at": "2026-05-08T09:45:00Z",
+    "detected_at": "2026-05-08T09:45:38Z",
+    "affected_nodes": ["redis"],
+    "blast_radius": ["auth-svc", "order-svc", "session-store"],
+    "telemetry": {
+      "service": "redis-cluster",
+      "status": "OOMKilled",
+      "restart_count": 3,
+      "recent_deployment": false,
+      "logs_summary": "FATAL: OOM command not allowed when used memory > 'maxmemory'\nWARN: 1024 changes in 300 seconds"
+    },
+    "timeline": [
+      { "time": "09:30:00", "event": "Redis memory usage crossed 85% threshold", "type": "warning" },
+      { "time": "09:40:00", "event": "Redis memory at 95% — eviction policy kicking in", "type": "warning" },
+      { "time": "09:45:00", "event": "Redis OOMKilled — pod evicted by kubelet", "type": "error" },
+      { "time": "09:45:38", "event": "auth-service session cache miss rate: 100%", "type": "error" },
+      { "time": "09:46:12", "event": "order-service cart data unavailable", "type": "error" },
+      { "time": "09:47:00", "event": "KubeGraph Sentinel incident INC-002 created", "type": "detection" }
+    ],
+    "rca": {
+      "root_cause": "Redis cluster OOMKilled due to unbounded memory growth from order-service session accumulation without TTL expiration configured.",
+      "evidence": [
+        "Redis memory grew linearly from 8:00 AM — no expiration on order session keys",
+        "maxmemory policy set to noeviction — no keys were evicted before OOM",
+        "order-service deployed session caching feature 3 days ago without TTL",
+        "kubelet OOMKill event at 09:45:00"
+      ],
+      "affected_services": ["auth-service", "order-service", "notification-service"],
+      "confidence_score": 89,
+      "remediation": [
+        "Set Redis maxmemory-policy to allkeys-lru",
+        "Add TTL to all order-service session keys (EXPIRE key 3600)",
+        "Increase Redis memory limit from 512Mi to 1Gi in deployment manifest",
+        "Add Redis memory alerting at 70% threshold"
+      ],
+      "kubectl_commands": [
+        "kubectl delete pod redis-cluster-0 -n data",
+        "kubectl exec -it redis-cluster-0 -n data -- redis-cli CONFIG SET maxmemory-policy allkeys-lru",
+        "kubectl logs redis-cluster-0 -n data --previous",
+        "kubectl top pod -n data",
+        "kubectl describe pod redis-cluster-0 -n data"
+      ],
+      "summary": "Redis cluster OOMKilled after order-service introduced unbounded session caching without TTL, causing 100% cache miss rate on auth sessions and cart data unavailability."
+    }
+  },
+  {
+    "id": "inc-003",
+    "title": "payment-service Latency Spike — P99 > 8s",
+    "severity": "high",
+    "status": "investigating",
+    "service": "payment-service",
+    "namespace": "default",
+    "started_at": "2026-05-08T08:30:00Z",
+    "detected_at": "2026-05-08T08:30:52Z",
+    "affected_nodes": ["payment-pod-1", "payment-svc"],
+    "blast_radius": ["order-svc", "frontend-svc"],
+    "telemetry": {
+      "service": "payment-service",
+      "status": "Running",
+      "restart_count": 0,
+      "recent_deployment": false,
+      "logs_summary": "WARN: External payment gateway timeout after 5000ms\nWARN: Retry attempt 3/3 failed\nERROR: Transaction processing queue depth: 847"
+    },
+    "timeline": [
+      { "time": "08:28:00", "event": "External payment gateway latency increased to 3s", "type": "warning" },
+      { "time": "08:30:00", "event": "payment-service P99 latency exceeded 8s SLA", "type": "error" },
+      { "time": "08:30:52", "event": "Transaction queue depth: 847 pending", "type": "warning" },
+      { "time": "08:31:00", "event": "order-service checkout timeout errors began", "type": "error" },
+      { "time": "08:32:00", "event": "Frontend checkout flow failures: 34%", "type": "error" }
+    ],
+    "rca": {
+      "root_cause": "External payment gateway experiencing degraded performance causing cascading queue buildup in payment-service with no circuit breaker configured.",
+      "evidence": [
+        "Gateway latency increased from baseline 200ms to 5000ms+ at 08:28",
+        "No circuit breaker — payment-service continues accepting requests while gateway is slow",
+        "Queue depth grew from 0 to 847 in 2 minutes",
+        "order-service has no timeout override — inherits payment-service delays"
+      ],
+      "affected_services": ["payment-service", "order-service", "frontend-service"],
+      "confidence_score": 82,
+      "remediation": [
+        "Implement circuit breaker pattern on external gateway calls",
+        "Set request timeout to 3s with fallback response",
+        "Add HPA scaling trigger on queue depth metric",
+        "Notify users of payment delays via notification-service"
+      ],
+      "kubectl_commands": [
+        "kubectl logs payment-service-9f2c1d-vp3r -n default --tail=100",
+        "kubectl exec -it payment-service-9f2c1d-vp3r -n default -- curl -w '%{time_total}' payment-gateway/health",
+        "kubectl top pod payment-service-9f2c1d-vp3r -n default",
+        "kubectl describe hpa payment-service -n default"
+      ],
+      "summary": "External payment gateway degradation caused payment-service queue buildup to 847 pending transactions. No circuit breaker allowed cascading timeout failures to order-service and frontend checkout flow."
+    }
+  },
+  {
+    "id": "inc-004",
+    "title": "DNS Resolution Failure — CoreDNS Crash",
+    "severity": "critical",
+    "status": "resolved",
+    "service": "coredns",
+    "namespace": "kube-system",
+    "started_at": "2026-05-08T07:15:00Z",
+    "detected_at": "2026-05-08T07:15:22Z",
+    "resolved_at": "2026-05-08T07:28:00Z",
+    "affected_nodes": ["ingress", "frontend-svc", "auth-svc", "payment-svc"],
+    "blast_radius": ["frontend-svc", "auth-svc", "payment-svc", "order-svc", "notification-svc", "admin-svc"],
+    "telemetry": {
+      "service": "coredns",
+      "status": "CrashLoopBackOff",
+      "restart_count": 4,
+      "recent_deployment": false,
+      "logs_summary": "FATAL: listen tcp :53: bind: address already in use\n[ERROR] plugin/errors: 2 SERVFAIL"
+    },
+    "timeline": [
+      { "time": "07:15:00", "event": "CoreDNS pod crashed — port 53 bind conflict", "type": "error" },
+      { "time": "07:15:22", "event": "Cluster-wide DNS resolution failure detected", "type": "error" },
+      { "time": "07:15:30", "event": "All inter-service communication failing (NXDOMAIN)", "type": "error" },
+      { "time": "07:20:00", "event": "SRE team paged — full cluster impact", "type": "detection" },
+      { "time": "07:22:00", "event": "Stale CoreDNS pod identified and deleted", "type": "remediation" },
+      { "time": "07:28:00", "event": "DNS resolution restored — all services recovering", "type": "resolved" }
+    ],
+    "rca": {
+      "root_cause": "CoreDNS pod failed to release port 53 during rolling update, causing new pod to fail binding — full cluster DNS outage for 13 minutes.",
+      "evidence": [
+        "Port 53 bind conflict in CoreDNS logs",
+        "Stale pod from previous rollout still holding port",
+        "All services showing NXDOMAIN for internal service discovery",
+        "Node-level netstat confirmed two processes competing for :53"
+      ],
+      "affected_services": ["ALL cluster services"],
+      "confidence_score": 97,
+      "remediation": [
+        "Delete stale CoreDNS pods during rollout",
+        "Add preStop hook to CoreDNS to gracefully release port 53",
+        "Implement DNS health check in readiness probe",
+        "Add CoreDNS PodDisruptionBudget"
+      ],
+      "kubectl_commands": [
+        "kubectl delete pod -n kube-system -l k8s-app=kube-dns",
+        "kubectl rollout restart deployment/coredns -n kube-system",
+        "kubectl logs -n kube-system -l k8s-app=kube-dns",
+        "kubectl get pods -n kube-system"
+      ],
+      "summary": "CoreDNS rolling update left a stale pod holding port 53, causing DNS resolution failure across the entire cluster for 13 minutes. All services were affected until stale pod deletion at 07:22."
+    }
+  },
+  {
+    "id": "inc-005",
+    "title": "RBAC Privilege Escalation Path Detected",
+    "severity": "critical",
+    "status": "active",
+    "service": "auth-sa",
+    "namespace": "default",
+    "started_at": "2026-05-08T06:00:00Z",
+    "detected_at": "2026-05-08T06:00:00Z",
+    "attack_path": true,
+    "affected_nodes": ["sa-auth", "rbac-admin", "secret-db", "secret-api"],
+    "blast_radius": ["postgres", "auth-svc", "payment-svc"],
+    "telemetry": {
+      "service": "auth-sa",
+      "status": "SecurityAlert",
+      "restart_count": 0,
+      "recent_deployment": false,
+      "logs_summary": "AUDIT: ServiceAccount auth-sa bound to ClusterRole cluster-admin\nAUDIT: Unexpected secret access: api-keys-secret from auth-pod"
+    },
+    "timeline": [
+      { "time": "05:58:00", "event": "ClusterRoleBinding created: auth-sa → cluster-admin", "type": "security" },
+      { "time": "06:00:00", "event": "auth-sa accessed postgres-credentials secret", "type": "security" },
+      { "time": "06:00:05", "event": "auth-sa accessed api-keys-secret (out of scope)", "type": "security" },
+      { "time": "06:00:10", "event": "Attack path detected: auth-pod → cluster-admin → all secrets", "type": "detection" }
+    ],
+    "attack_path_detail": {
+      "entry_point": "auth-pod-1",
+      "path": [
+        "auth-pod-1 (compromised pod)",
+        "→ auth-sa (service account token mounted)",
+        "→ cluster-admin ClusterRole (over-privileged binding)",
+        "→ postgres-credentials secret (DB access)",
+        "→ api-keys-secret (lateral movement)",
+        "→ Full cluster compromise possible"
+      ],
+      "risk_score": 95,
+      "attack_type": "RBAC Privilege Escalation + Lateral Movement"
+    },
+    "rca": {
+      "root_cause": "auth-sa ServiceAccount was bound to cluster-admin ClusterRole, granting a pod-level service account unrestricted cluster access, enabling lateral movement to secrets outside its operational scope.",
+      "evidence": [
+        "ClusterRoleBinding auth-sa-admin-binding created at 05:58",
+        "Audit logs show auth-sa accessing api-keys-secret — not in its required permissions",
+        "Principle of least privilege violated — auth-sa needs only read on postgres-credentials",
+        "No NetworkPolicy restricting auth-pod egress"
+      ],
+      "affected_services": ["auth-service", "payment-service", "ALL secrets"],
+      "confidence_score": 98,
+      "remediation": [
+        "Immediately delete ClusterRoleBinding auth-sa-admin-binding",
+        "Create scoped Role with only required permissions (read postgres-credentials)",
+        "Rotate postgres-credentials and api-keys-secret immediately",
+        "Implement OPA/Gatekeeper policy to prevent cluster-admin bindings for workload SAs",
+        "Enable Kubernetes Audit logging for all secret access"
+      ],
+      "kubectl_commands": [
+        "kubectl delete clusterrolebinding auth-sa-admin-binding",
+        "kubectl create role auth-role --verb=get --resource=secrets --resource-name=postgres-credentials -n default",
+        "kubectl create rolebinding auth-role-binding --role=auth-role --serviceaccount=default:auth-sa -n default",
+        "kubectl create secret generic postgres-credentials --from-literal=password=$(openssl rand -base64 32) -n data --dry-run=client -o yaml | kubectl apply -f -",
+        "kubectl get clusterrolebindings -o json | jq '.items[] | select(.subjects[]?.name==\"auth-sa\")'"
+      ],
+      "summary": "auth-sa ServiceAccount was over-privileged with cluster-admin binding, enabling a compromised auth pod to access secrets outside its scope. Full RBAC privilege escalation path identified with 95/100 risk score."
+    }
+  }
+]
