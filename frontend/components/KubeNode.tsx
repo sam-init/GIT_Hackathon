@@ -2,93 +2,154 @@
 import { Handle, Position, NodeProps } from "reactflow";
 
 const STATUS_COLORS: Record<string, string> = {
-  healthy: "#10b981",
-  warning: "#f59e0b",
-  critical: "#ef4444",
-  unknown: "#6b7280",
+  healthy:  "#10B981",
+  warning:  "#F59E0B",
+  critical: "#EF4444",
+  unknown:  "#6B7280",
 };
 
+// Subtle tinted backgrounds — enterprise card feel, no rainbow
+const NODE_TYPE_ACCENT: Record<string, { bg: string; border: string; label: string }> = {
+  service:           { bg: "#0F2235", border: "#1E3A5F", label: "SVC" },
+  pod:               { bg: "#140F2B", border: "#2D1E5E", label: "POD" },
+  database:          { bg: "#1A1400", border: "#3D3000", label: "DB" },
+  cache:             { bg: "#1A0F1A", border: "#3D1E3D", label: "CACHE" },
+  "message-queue":   { bg: "#0D1A11", border: "#1E3D25", label: "MQ" },
+  ingress:           { bg: "#061A1E", border: "#0E3540", label: "ING" },
+  "service-account": { bg: "#0F0F2B", border: "#1E1E5E", label: "SA" },
+  "cluster-role":    { bg: "#1A0A0A", border: "#3D1515", label: "CR" },
+  secret:            { bg: "#1A0A0A", border: "#3D1515", label: "SEC" },
+  unknown:           { bg: "#111827", border: "#1E293B", label: "?" },
+};
+
+// Text icons (no emoji on node cards for clarity)
 const NODE_ICONS: Record<string, string> = {
-  service: "⬡",
-  pod: "◉",
-  database: "🗄",
-  cache: "⚡",
-  "message-queue": "📨",
-  ingress: "🌐",
-  "service-account": "👤",
-  "cluster-role": "🔑",
-  secret: "🔒",
-  unknown: "◆",
-};
-
-const NODE_BG: Record<string, string> = {
-  service: "rgba(59,130,246,0.12)",
-  pod: "rgba(139,92,246,0.12)",
-  database: "rgba(245,158,11,0.12)",
-  cache: "rgba(236,72,153,0.12)",
-  "message-queue": "rgba(16,185,129,0.12)",
-  ingress: "rgba(6,182,212,0.12)",
-  "service-account": "rgba(99,102,241,0.12)",
-  "cluster-role": "rgba(239,68,68,0.15)",
-  secret: "rgba(239,68,68,0.1)",
-  unknown: "rgba(107,114,128,0.1)",
+  service:           "⬡",
+  pod:               "◉",
+  database:          "▪",
+  cache:             "⚡",
+  "message-queue":   "⇉",
+  ingress:           "⊕",
+  "service-account": "⊘",
+  "cluster-role":    "◈",
+  secret:            "⊞",
+  unknown:           "◆",
 };
 
 export function KubeNode({ data }: NodeProps) {
-  const status = data.status || "healthy";
-  const color = STATUS_COLORS[status] || STATUS_COLORS.unknown;
-  const icon = NODE_ICONS[data.type] || NODE_ICONS.unknown;
-  const bg = NODE_BG[data.type] || NODE_BG.unknown;
-  const isAlert = status === "critical" || status === "warning";
+  const status    = data.status || "healthy";
+  const statColor = STATUS_COLORS[status] || STATUS_COLORS.unknown;
+  const icon      = NODE_ICONS[data.type] || NODE_ICONS.unknown;
+  const typeStyle = NODE_TYPE_ACCENT[data.type] || NODE_TYPE_ACCENT.unknown;
+  const isAlert   = status === "critical" || status === "warning";
+
+  // Status-driven border: subtle base + severity accent on alert
+  const borderColor = isAlert ? statColor : typeStyle.border;
+  const cardBg      = typeStyle.bg;
 
   return (
     <div
       style={{
-        background: bg,
-        border: `1.5px solid ${color}`,
-        borderRadius: 10,
-        padding: "10px 14px",
+        background: cardBg,
+        border: `1px solid ${borderColor}`,
+        borderRadius: 8,
+        padding: "9px 12px 10px",
         minWidth: 130,
-        maxWidth: 170,
-        boxShadow: isAlert ? `0 0 16px ${color}55` : "0 2px 8px rgba(0,0,0,0.4)",
-        transition: "all 0.4s ease",
+        maxWidth: 165,
+        boxShadow: isAlert
+          ? `0 2px 10px rgba(0,0,0,0.5), inset 0 0 0 1px ${statColor}22`
+          : "0 1px 6px rgba(0,0,0,0.4)",
+        transition: "all 0.2s ease",
         cursor: "pointer",
         position: "relative",
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ background: color, border: "none", width: 6, height: 6 }} />
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{ background: statColor, border: "none", width: 5, height: 5, top: -3 }}
+      />
 
-      {/* Pulse ring for alerts */}
-      {isAlert && (
-        <div style={{
-          position: "absolute", inset: -4, borderRadius: 14,
-          border: `1px solid ${color}`,
-          animation: status === "critical" ? "pulse-red 1s infinite" : "pulse-yellow 1.5s infinite",
-          pointerEvents: "none",
-        }} />
-      )}
+      {/* Type label chip */}
+      <div style={{
+        position: "absolute",
+        top: 7,
+        right: 9,
+        fontSize: 8,
+        fontWeight: 700,
+        color: typeStyle.border,
+        letterSpacing: "0.07em",
+        textTransform: "uppercase",
+        fontFamily: "inherit",
+      }}>
+        {typeStyle.label}
+      </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <span style={{ fontSize: 16 }}>{icon}</span>
+      {/* Icon + status dot row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+        <span style={{ fontSize: 14, color: "#CBD5E1", opacity: 0.8 }}>{icon}</span>
         <div style={{
-          width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0,
-          boxShadow: `0 0 6px ${color}`,
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: statColor,
+          flexShrink: 0,
+          // subtle pulse for critical only — no glow rings
+          animation: status === "critical" ? "status-pulse 1.5s ease-in-out infinite" : "none",
         }} />
       </div>
 
-      <div style={{ fontSize: 11, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.3, wordBreak: "break-word" }}>
+      {/* Label */}
+      <div style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: "#E2E8F0",
+        lineHeight: 1.35,
+        wordBreak: "break-word",
+        paddingRight: 24, // space for type chip
+      }}>
         {data.label}
       </div>
-      <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
-        {data.type} · {data.namespace}
+
+      {/* Namespace */}
+      <div style={{
+        fontSize: 9,
+        color: "#4B5563",
+        marginTop: 3,
+        fontFamily: "'JetBrains Mono', monospace",
+        letterSpacing: "0.02em",
+      }}>
+        {data.namespace}
       </div>
+
+      {/* Status line for non-healthy */}
       {status !== "healthy" && (
-        <div style={{ fontSize: 10, fontWeight: 700, color, marginTop: 4, textTransform: "uppercase" }}>
-          ⚡ {status}
+        <div style={{
+          marginTop: 6,
+          paddingTop: 5,
+          borderTop: `1px solid ${statColor}28`,
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+        }}>
+          <div style={{ width: 5, height: 5, borderRadius: "50%", background: statColor, flexShrink: 0 }} />
+          <span style={{
+            fontSize: 9,
+            fontWeight: 700,
+            color: statColor,
+            textTransform: "uppercase",
+            letterSpacing: "0.07em",
+          }}>
+            {status}
+          </span>
         </div>
       )}
 
-      <Handle type="source" position={Position.Bottom} style={{ background: color, border: "none", width: 6, height: 6 }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ background: statColor, border: "none", width: 5, height: 5, bottom: -3 }}
+      />
     </div>
   );
 }

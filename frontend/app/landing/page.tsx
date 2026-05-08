@@ -1,475 +1,328 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
-import { useState, useEffect, useRef } from "react";
-import styles from "./landing.module.css";
-
-/* ─── Static Data ─────────────────────────────────────────── */
-
-const FEATURES = [
-  {
-    icon: "⬡",
-    title: "Auto-Discovery",
-    desc: "Zero-config mapping of every CRD and service mesh link across namespaces.",
-  },
-  {
-    icon: "◎",
-    title: "Blast Radius Calculation",
-    desc: "Predictive modeling of failure propagation points across your entire cluster.",
-  },
-  {
-    icon: "⟳",
-    title: "Live Graph Sync",
-    desc: "Real-time topology updates streamed via gRPC — no polling, no lag.",
-  },
-  {
-    icon: "⚡",
-    title: "Sub-second RCA",
-    desc: "AI-driven trace synthesis identifies the exact config change that triggered the failure.",
-  },
-];
-
-const METRICS = [
-  { label: "MTTR Reduction", value: "94%", sub: "avg across enterprise clients" },
-  { label: "Clusters Monitored", value: "12k+", sub: "in production today" },
-  { label: "Incidents Resolved", value: "400k+", sub: "with AI root cause analysis" },
-  { label: "Uptime SLA", value: "99.99%", sub: "guaranteed platform availability" },
-];
-
-const PRECISION_CARDS = [
-  {
-    tag: "ANALYSIS",
-    title: "Root Cause Analysis",
-    desc: "AI-driven trace synthesis identifies the exact line of code or config change that triggered the failure.",
-    color: "#38bdf8",
-  },
-  {
-    tag: "PROPAGATION",
-    title: "Failure Propagation",
-    desc: "Visualize how a single pod failure cascades through your microservices architecture in real-time.",
-    color: "#818cf8",
-  },
-  {
-    tag: "CORRELATION",
-    title: "Metric Correlation",
-    desc: "Automatically aligns logs, metrics, and traces onto a single timeline for instant context.",
-    color: "#34d399",
-  },
-];
-
-const CLI_LINES = [
-  { delay: 0, text: "$ cypher connect --cluster prod-us-east-1", type: "cmd" },
-  { delay: 600, text: "✓ Connected to prod-us-east-1 (42 nodes, 318 pods)", type: "ok" },
-  { delay: 1200, text: "$ cypher incident analyze INC-0492", type: "cmd" },
-  { delay: 1800, text: "⟳ Fetching topology snapshot...", type: "info" },
-  { delay: 2400, text: "⟳ Correlating metrics & traces (t-48h)...", type: "info" },
-  { delay: 3200, text: "━━━ ROOT CAUSE IDENTIFIED ━━━━━━━━━━━━━━━━", type: "divider" },
-  { delay: 3800, text: "  Component : payment-api:v2.1.4", type: "result" },
-  { delay: 4200, text: "  Cause     : Memory leak → PG connection pool saturation", type: "result" },
-  { delay: 4600, text: "  Blast     : order-service, billing-worker (2 downstream)", type: "result" },
-  { delay: 5000, text: "  Fix       : Roll back to payment-api:v2.1.3", type: "result" },
-  { delay: 5600, text: "✓ Report saved to /reports/INC-0492-rca.md", type: "ok" },
-  { delay: 6200, text: "$ _", type: "cursor" },
-];
-
-const NAV_LINKS = ["Platform", "Clusters", "Alerts", "Pricing", "Docs"];
-
-/* ─── Animated CLI Component ─────────────────────────────── */
-function AnimatedCLI() {
-  const [visibleLines, setVisibleLines] = useState<number[]>([]);
-
+// ─── Dynamic Hyperspeed (SSR-safe) ────────────────────────────────────────────
+function HyperspeedBackground() {
+  const [Comp, setComp] = useState<React.ComponentType<{ style?: React.CSSProperties }> | null>(null);
   useEffect(() => {
-    CLI_LINES.forEach((line, i) => {
-      setTimeout(() => {
-        setVisibleLines((prev) => [...prev, i]);
-      }, line.delay);
+    import("@/components/Hyperspeed").then((m) => setComp(() => m.Hyperspeed));
+  }, []);
+  if (!Comp) return null;
+  return <Comp style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />;
+}
+
+// ─── GSAP ScrollTrigger setup ─────────────────────────────────────────────────
+function useScrollReveal(selectors: { ref: React.RefObject<HTMLElement | null>; cls: string; opts?: object }[]) {
+  useEffect(() => {
+    let ctx: any;
+    Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ gsap }, { ScrollTrigger }]) => {
+      gsap.registerPlugin(ScrollTrigger);
+      ctx = gsap.context(() => {
+        selectors.forEach(({ ref, cls, opts }) => {
+          if (!ref.current) return;
+          const els = ref.current.querySelectorAll(cls);
+          if (els.length === 0) return;
+          gsap.from(els, {
+            scrollTrigger: { trigger: ref.current, start: "top 76%", once: true },
+            y: 26, opacity: 0, stagger: 0.11, duration: 0.6, ease: "power2.out",
+            ...opts,
+          });
+        });
+      });
     });
+    return () => ctx?.revert();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+}
 
+// ─── Small shared components ──────────────────────────────────────────────────
+function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <div className={styles.cliWindow}>
-      <div className={styles.cliTitleBar}>
-        <span className={styles.cliDot} style={{ background: "#ef4444" }} />
-        <span className={styles.cliDot} style={{ background: "#f59e0b" }} />
-        <span className={styles.cliDot} style={{ background: "#10b981" }} />
-        <span className={styles.cliTitle}>cypher-cli — zsh</span>
+    <div style={{ fontSize: 10, fontWeight: 700, color: "#38BDF8", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 14 }}>
+      {children}
+    </div>
+  );
+}
+
+function MetricCard({ value, label, sub }: { value: string; label: string; sub?: string }) {
+  return (
+    <div style={{ padding: "14px 18px", borderRadius: 8, background: "rgba(17,24,39,0.75)", border: "1px solid rgba(56,189,248,0.13)", backdropFilter: "blur(10px)", minWidth: 126 }}>
+      <div style={{ fontSize: 24, fontWeight: 800, color: "#38BDF8", letterSpacing: "-0.02em", lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 5 }}>{label}</div>
+      {sub && <div style={{ fontSize: 9, color: "#334155", marginTop: 2 }}>{sub}</div>}
+    </div>
+  );
+}
+
+// ─── RCA demo card ────────────────────────────────────────────────────────────
+function RCACard() {
+  const cmds = [
+    "kubectl rollout undo deployment/auth-service -n default",
+    "kubectl logs auth-service-7d4b9c-xk2p -n default --previous",
+    "kubectl describe pod auth-service-7d4b9c-xk2p -n default",
+  ];
+  return (
+    <div style={{ background: "#111827", border: "1px solid #1E293B", borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ padding: "11px 16px", borderBottom: "1px solid #1E293B", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF4444", flexShrink: 0 }} />
+        <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.09em", textTransform: "uppercase" }}>AI Root Cause Analysis</span>
+        <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#10B981" }}>92% Confidence</span>
       </div>
-      <div className={styles.cliBody}>
-        {CLI_LINES.map((line, i) =>
-          visibleLines.includes(i) ? (
-            <div
-              key={i}
-              className={`${styles.cliLine} ${styles[`cli_${line.type}`]}`}
-            >
-              {line.text}
+      <div style={{ padding: "14px 16px" }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 5 }}>Root Cause</div>
+        <div style={{ fontSize: 12, color: "#E2E8F0", lineHeight: 1.6, marginBottom: 12 }}>
+          auth-service v2.4.1 introduced a PostgreSQL connection pool exhaustion — CrashLoopBackOff across 4 downstream services.
+        </div>
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
+          {["auth-service", "frontend-service", "payment-service", "order-service"].map(s => (
+            <span key={s} style={{ padding: "2px 7px", borderRadius: 4, fontSize: 9, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#F87171", fontFamily: "monospace" }}>{s}</span>
+          ))}
+        </div>
+        <div style={{ fontSize: 9, fontWeight: 700, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>kubectl Commands</div>
+        <div style={{ background: "#0B1020", borderRadius: 6, border: "1px solid #1E293B", overflow: "hidden" }}>
+          {cmds.map((cmd, i) => (
+            <div key={i} style={{ padding: "7px 12px", borderBottom: i < cmds.length - 1 ? "1px solid #1E293B" : "none", display: "flex", gap: 8 }}>
+              <span style={{ color: "#334155", fontFamily: "monospace", fontSize: 10, flexShrink: 0 }}>$</span>
+              <span style={{ color: "#94A3B8", fontFamily: "monospace", fontSize: 10 }}>{cmd}</span>
             </div>
-          ) : null
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-/* ─── Topology SVG Mini Demo ─────────────────────────────── */
-function TopologyDemo() {
-  const nodes = [
-    { id: "ingress", x: 50, y: 50, label: "Ingress", status: "healthy" },
-    { id: "api-gw", x: 200, y: 50, label: "API-GW", status: "healthy" },
-    { id: "payment", x: 350, y: 30, label: "payment-api", status: "critical" },
-    { id: "order", x: 350, y: 100, label: "order-svc", status: "warning" },
-    { id: "postgres", x: 500, y: 50, label: "Postgres", status: "critical" },
-    { id: "billing", x: 500, y: 130, label: "billing-worker", status: "warning" },
-    { id: "redis", x: 200, y: 150, label: "Redis", status: "healthy" },
+// ─── Architecture pipeline ────────────────────────────────────────────────────
+function ArchPipeline() {
+  const steps = [
+    { label: "Minikube",    sub: "Kubernetes Cluster",   icon: "⬡" },
+    { label: "Watcher",     sub: "Event Collector",       icon: "◉" },
+    { label: "FastAPI",     sub: "Backend Engine",        icon: "▪" },
+    { label: "AI Reasoning",sub: "Llama 3.1 70B",         icon: "◎" },
+    { label: "Dashboard",   sub: "React Visualization",   icon: "◈" },
   ];
-  const edges = [
-    ["ingress", "api-gw"], ["api-gw", "payment"], ["api-gw", "order"],
-    ["payment", "postgres"], ["order", "postgres"], ["order", "billing"],
-    ["api-gw", "redis"],
-  ];
-  const statusColor: Record<string, string> = {
-    healthy: "#10b981", warning: "#f59e0b", critical: "#ef4444",
-  };
-  const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
-
   return (
-    <div className={styles.topoDemoWrap}>
-      <svg viewBox="0 0 580 200" className={styles.topoSvg} preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <filter id="glow-cyan">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-            <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-          <filter id="glow-red">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-            <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        {edges.map(([a, b], i) => {
-          const na = nodeMap[a]; const nb = nodeMap[b];
-          const isCriticalEdge = na?.status === "critical" || nb?.status === "critical";
-          return (
-            <line
-              key={i}
-              x1={na.x + 40} y1={na.y + 16} x2={nb.x + 40} y2={nb.y + 16}
-              stroke={isCriticalEdge ? "rgba(239,68,68,0.5)" : "rgba(56,189,248,0.2)"}
-              strokeWidth={isCriticalEdge ? 1.5 : 1}
-              strokeDasharray={isCriticalEdge ? "4 3" : "none"}
-            />
-          );
-        })}
-        {nodes.map((n) => (
-          <g key={n.id} transform={`translate(${n.x},${n.y})`}>
-            <rect
-              width={80} height={32} rx={4}
-              fill="rgba(17,24,39,0.9)"
-              stroke={statusColor[n.status]}
-              strokeWidth={n.status === "critical" ? 1.5 : 1}
-              filter={n.status === "critical" ? "url(#glow-red)" : n.status === "healthy" ? "url(#glow-cyan)" : undefined}
-            />
-            <circle cx={10} cy={16} r={4} fill={statusColor[n.status]} />
-            <text x={20} y={20} fontSize="9" fill="#d4e4fa" fontFamily="'JetBrains Mono', monospace">
-              {n.label}
-            </text>
-          </g>
-        ))}
-      </svg>
-      <div className={styles.topoLegend}>
-        <span className={styles.legendDot} style={{ background: "#10b981" }} /> Healthy
-        <span className={styles.legendDot} style={{ background: "#f59e0b", marginLeft: 16 }} /> Degraded
-        <span className={styles.legendDot} style={{ background: "#ef4444", marginLeft: 16 }} /> Critical
-      </div>
+    <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+      {steps.map((s, i) => (
+        <div key={s.label} style={{ display: "flex", alignItems: "center" }}>
+          <div className="arch-step" style={{ textAlign: "center", padding: "14px 18px" }}>
+            <div style={{ width: 42, height: 42, borderRadius: 10, background: "#111827", border: "1px solid #1E293B", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, color: "#38BDF8", margin: "0 auto 9px" }}>{s.icon}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#E2E8F0" }}>{s.label}</div>
+            <div style={{ fontSize: 10, color: "#475569", marginTop: 2 }}>{s.sub}</div>
+          </div>
+          {i < steps.length - 1 && <div style={{ color: "#1E293B", fontSize: 16, padding: "0 2px", flexShrink: 0 }}>→</div>}
+        </div>
+      ))}
     </div>
   );
 }
 
-/* ─── Incident Card ──────────────────────────────────────── */
-function IncidentCard() {
-  return (
-    <div className={styles.incidentCard}>
-      <div className={styles.incidentHeader}>
-        <span className={styles.incidentBadge}>CRITICAL</span>
-        <span className={styles.incidentTime}>4m ago</span>
-      </div>
-      <div className={styles.incidentTitle}>Automated RCA Report</div>
-      <div className={styles.incidentId}>Incident #492-AX · payment-api namespace</div>
-      <div className={styles.incidentDivider} />
-      <div className={styles.incidentLabel}>THE VERDICT</div>
-      <div className={styles.incidentVerdict}>
-        A memory leak in the recently deployed{" "}
-        <code className={styles.incidentCode}>payment-api:v2.1.4</code> is
-        preventing database connection release. This is saturating the Postgres
-        connection pool, causing upstream{" "}
-        <code className={styles.incidentCode}>order-service</code> to timeout.
-      </div>
-      <div className={styles.incidentFooter}>
-        <div className={styles.incidentAction}>View Full RCA →</div>
-        <div className={styles.incidentAction}>Auto-Remediate →</div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Main Page ──────────────────────────────────────────── */
+// ─── Main landing page ────────────────────────────────────────────────────────
 export default function LandingPage() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
+  const problemRef = useRef<HTMLElement>(null);
+  const graphRef   = useRef<HTMLElement>(null);
+  const rcaRef     = useRef<HTMLElement>(null);
+  const archRef    = useRef<HTMLElement>(null);
+  const ctaRef     = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
+  useScrollReveal([
+    { ref: problemRef, cls: ".reveal" },
+    { ref: graphRef,   cls: ".reveal" },
+    { ref: rcaRef,     cls: ".reveal" },
+    { ref: archRef,    cls: ".arch-step", opts: { stagger: 0.09, y: 18 } },
+    { ref: ctaRef,     cls: ".reveal" },
+  ]);
 
   return (
-    <div className={styles.root}>
-      {/* Scanline overlay */}
-      <div className={styles.scanlineOverlay} />
+    <div style={{ background: "#0B1020", color: "#E2E8F0", fontFamily: "Inter, -apple-system, sans-serif", overflowX: "hidden" }}>
 
-      {/* ── Navbar ── */}
-      <header className={`${styles.nav} ${scrolled ? styles.navScrolled : ""}`}>
-        <div className={styles.navInner}>
-          <div className={styles.navBrand}>
-            <span className={styles.navLogo}>⬡</span>
-            <span className={styles.navName}>Cypher<span className={styles.navAccent}> AI</span></span>
-          </div>
-          <nav className={styles.navLinks}>
-            {NAV_LINKS.map((l) => (
-              <a key={l} href="#" className={styles.navLink}>{l}</a>
-            ))}
-          </nav>
-          <div className={styles.navActions}>
-            <a href="#" className={styles.btnGhost}>Sign in</a>
-            <a href="#" className={styles.btnPrimary}>Get Early Access</a>
-          </div>
-          <button className={styles.hamburger} onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">
-            <span /><span /><span />
-          </button>
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <section style={{ position: "relative", height: "100vh", minHeight: 620, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* Hyperspeed — hero only */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+          <HyperspeedBackground />
         </div>
-        {mobileOpen && (
-          <div className={styles.mobileMenu}>
-            {NAV_LINKS.map((l) => <a key={l} href="#" className={styles.mobileLink}>{l}</a>)}
-            <a href="#" className={styles.btnPrimary} style={{ marginTop: 8 }}>Get Early Access</a>
-          </div>
-        )}
-      </header>
 
-      {/* ── Hero ── */}
-      <section className={styles.hero} ref={heroRef}>
-        <div className={styles.heroBg}>
-          <div className={styles.heroGlow1} />
-          <div className={styles.heroGlow2} />
-          <div className={styles.heroGrid} />
-        </div>
-        <div className={styles.heroContent}>
-          <div className={styles.heroBadge}>
-            <span className={styles.heroBadgeDot} />
-            AI-FIRST KUBERNETES INTELLIGENCE
+        {/* Readability overlay */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 1, background: "linear-gradient(to bottom, rgba(11,16,32,0.72) 0%, rgba(11,16,32,0.48) 35%, rgba(11,16,32,0.82) 80%, #0B1020 100%)" }} />
+
+        {/* Nav */}
+        <nav style={{ position: "relative", zIndex: 10, height: 52, padding: "0 28px", display: "flex", alignItems: "center", borderBottom: "1px solid rgba(30,41,59,0.45)", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <div style={{ width: 27, height: 27, borderRadius: 6, background: "#38BDF8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#0F172A", fontWeight: 800 }}>⬡</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0" }}>KubeGraph <span style={{ color: "#38BDF8" }}>Sentinel</span></div>
+              <div style={{ fontSize: 8, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase" }}>AI Incident Intelligence</div>
+            </div>
           </div>
-          <h1 className={styles.heroTitle}>
-            Stop chasing logs.<br />
-            <span className={styles.heroTitleAccent}>Understand your infrastructure.</span>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+            <Link href="/" style={{ padding: "5px 13px", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#64748B", textDecoration: "none" }}>Dashboard</Link>
+            <Link href="/incidents" style={{ padding: "5px 13px", borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#64748B", textDecoration: "none" }}>Incidents</Link>
+            <Link href="/" style={{ padding: "5px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, color: "#0F172A", textDecoration: "none", background: "#38BDF8" }}>Launch →</Link>
+          </div>
+        </nav>
+
+        {/* Hero content */}
+        <div style={{ position: "relative", zIndex: 10, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "4px 13px", borderRadius: 20, background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", marginBottom: 26 }}>
+            <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#38BDF8" }} />
+            <span style={{ fontSize: 10, fontWeight: 600, color: "#38BDF8", letterSpacing: "0.08em" }}>KUBERNETES INCIDENT INTELLIGENCE PLATFORM</span>
+          </div>
+
+          <h1 style={{ fontSize: "clamp(30px, 5.2vw, 62px)", fontWeight: 800, color: "#F1F5F9", lineHeight: 1.11, letterSpacing: "-0.03em", maxWidth: 800, marginBottom: 20 }}>
+            AI-Powered Kubernetes<br />Incident Intelligence
           </h1>
-          <p className={styles.heroDesc}>
-            KubeSentry AI understands your infrastructure's topology, identifies failure
-            propagation, and provides root cause analysis in seconds — not hours.
+
+          <p style={{ fontSize: "clamp(14px, 1.5vw, 17px)", color: "#94A3B8", maxWidth: 540, lineHeight: 1.78, marginBottom: 34 }}>
+            Visualize cascading failures, correlate infrastructure telemetry, and reduce Mean Time To Resolution with graph-native AI reasoning.
           </p>
-          <div className={styles.heroActions}>
-            <a href="#" className={styles.btnPrimary} style={{ padding: "14px 32px", fontSize: 15 }}>
-              Start Free Trial
-            </a>
-            <a href="#demo" className={styles.btnGhost} style={{ padding: "14px 28px", fontSize: 15 }}>
-              Watch Demo →
-            </a>
-          </div>
-          <div className={styles.heroStats}>
-            {METRICS.map((m) => (
-              <div key={m.label} className={styles.heroStatItem}>
-                <div className={styles.heroStatValue}>{m.value}</div>
-                <div className={styles.heroStatLabel}>{m.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Hero visual */}
-        <div className={styles.heroVisual}>
-          <div className={styles.heroVisualCard}>
-            <div className={styles.heroVisualHeader}>
-              <div className={styles.heroVisualDots}>
-                <span style={{ background: "#ef4444" }} />
-                <span style={{ background: "#f59e0b" }} />
-                <span style={{ background: "#10b981" }} />
-              </div>
-              <span className={styles.heroVisualTag}>LIVE TOPOLOGY · prod-us-east-1</span>
-              <span className={styles.heroVisualLive}>● LIVE</span>
-            </div>
-            <TopologyDemo />
-            <IncidentCard />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Trusted by ── */}
-      <section className={styles.trusted}>
-        <div className={styles.container}>
-          <p className={styles.trustedLabel}>TRUSTED BY PLATFORM TEAMS AT</p>
-          <div className={styles.trustedLogos}>
-            {["Stripe", "Datadog", "Notion", "Linear", "Vercel", "PlanetScale"].map((co) => (
-              <span key={co} className={styles.trustedLogo}>{co}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Feature Pillars ── */}
-      <section className={styles.section} id="platform">
-        <div className={styles.container}>
-          <div className={styles.sectionTag}>PLATFORM</div>
-          <h2 className={styles.sectionTitle}>Deep Infrastructure<br />Topology Awareness</h2>
-          <p className={styles.sectionDesc}>
-            Traditional monitoring shows you a list of alerts. Cypher AI visualizes the actual
-            relationship between services, ingress controllers, and persistent volumes to
-            understand the full blast radius.
-          </p>
-          <div className={styles.featureGrid}>
-            {FEATURES.map((f) => (
-              <div key={f.title} className={styles.featureCard}>
-                <div className={styles.featureIcon}>{f.icon}</div>
-                <div className={styles.featureTitle}>{f.title}</div>
-                <div className={styles.featureDesc}>{f.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Precision Engineering ── */}
-      <section className={styles.section} style={{ background: "rgba(1,15,31,0.6)" }}>
-        <div className={styles.container}>
-          <div className={styles.sectionTag}>PRECISION ENGINEERING</div>
-          <h2 className={styles.sectionTitle}>Built for Reliability Teams</h2>
-          <p className={styles.sectionDesc}>
-            High-performance tools designed for the speed of modern cloud-native deployment cycles.
-          </p>
-          <div className={styles.precisionGrid}>
-            {PRECISION_CARDS.map((c) => (
-              <div key={c.title} className={styles.precisionCard}>
-                <div className={styles.precisionTag} style={{ color: c.color, borderColor: `${c.color}40` }}>{c.tag}</div>
-                <div className={styles.precisionTitle}>{c.title}</div>
-                <div className={styles.precisionDesc}>{c.desc}</div>
-                <div className={styles.precisionArrow} style={{ color: c.color }}>→</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CLI Demo ── */}
-      <section className={styles.section} id="demo">
-        <div className={styles.container}>
-          <div className={styles.cliLayout}>
-            <div className={styles.cliLeft}>
-              <div className={styles.sectionTag}>DEVELOPER EXPERIENCE</div>
-              <h2 className={styles.sectionTitle}>Designed for<br />Terminal Power Users</h2>
-              <p className={styles.sectionDesc}>
-                The Cypher CLI puts AI intelligence directly into your terminal workflow.
-                Get instant root-cause analysis without ever leaving your IDE.
-              </p>
-              <ul className={styles.cliFeatureList}>
-                <li>⟳ Real-time incident streaming via gRPC</li>
-                <li>⬡ AI-powered RCA in a single command</li>
-                <li>◎ Auto-remediation with change preview</li>
-                <li>⚡ Native kubectl plugin support</li>
-              </ul>
-              <a href="#" className={styles.btnPrimary} style={{ marginTop: 32, display: "inline-block" }}>
-                Install CLI →
-              </a>
-            </div>
-            <div className={styles.cliRight}>
-              <AnimatedCLI />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Metrics Banner ── */}
-      <section className={styles.metricsSection}>
-        <div className={styles.container}>
-          <div className={styles.metricsGrid}>
-            {METRICS.map((m) => (
-              <div key={m.label} className={styles.metricItem}>
-                <div className={styles.metricValue}>{m.value}</div>
-                <div className={styles.metricLabel}>{m.label}</div>
-                <div className={styles.metricSub}>{m.sub}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section className={styles.cta}>
-        <div className={styles.ctaGlow} />
-        <div className={styles.container} style={{ position: "relative", zIndex: 1 }}>
-          <div className={styles.ctaTag}>GET STARTED TODAY</div>
-          <h2 className={styles.ctaTitle}>Achieve Perfect<br />Operational Clarity</h2>
-          <p className={styles.ctaDesc}>
-            Join 400+ platform teams using Cypher AI to eliminate Kubernetes downtime.
-            <br />AI-First Observability for the Kubernetes ecosystem.
-          </p>
-          <div className={styles.ctaActions}>
-            <a href="#" className={styles.btnPrimary} style={{ padding: "16px 40px", fontSize: 16 }}>
-              Start Free — No credit card
-            </a>
-            <a href="#" className={styles.btnGhost} style={{ padding: "16px 32px", fontSize: 16 }}>
-              Talk to Sales
+          <div style={{ display: "flex", gap: 11, flexWrap: "wrap", justifyContent: "center", marginBottom: 48 }}>
+            <Link href="/" style={{ padding: "11px 24px", borderRadius: 8, fontSize: 13, fontWeight: 700, color: "#0F172A", textDecoration: "none", background: "#38BDF8", display: "inline-flex", alignItems: "center", gap: 6 }}>
+              Launch Platform <span>→</span>
+            </Link>
+            <a href="#architecture" style={{ padding: "11px 22px", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#94A3B8", textDecoration: "none", background: "rgba(15,23,42,0.55)", border: "1px solid #1E293B", backdropFilter: "blur(10px)" }}>
+              View Architecture
             </a>
           </div>
+
+          {/* Metrics */}
+          <div style={{ display: "flex", gap: 9, flexWrap: "wrap", justifyContent: "center" }}>
+            <MetricCard value="19"  label="Cluster Nodes"   sub="minikube · default" />
+            <MetricCard value="4"   label="Active Incidents" sub="3 critical" />
+            <MetricCard value="24"  label="Service Edges"   sub="dependency graph" />
+            <MetricCard value="68%" label="MTTR Reduction"  sub="vs. manual triage" />
+          </div>
+        </div>
+
+        {/* Scroll cue */}
+        <div style={{ position: "relative", zIndex: 10, textAlign: "center", paddingBottom: 22, flexShrink: 0 }}>
+          <div style={{ fontSize: 9, color: "#1E293B", letterSpacing: "0.1em", textTransform: "uppercase" }}>Scroll</div>
+          <div style={{ fontSize: 14, color: "#1E293B", marginTop: 3 }}>↓</div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className={styles.footer}>
-        <div className={styles.container}>
-          <div className={styles.footerTop}>
-            <div className={styles.footerBrand}>
-              <span className={styles.navLogo}>⬡</span>
-              <span className={styles.navName}>Cypher<span className={styles.navAccent}> AI</span></span>
-              <p className={styles.footerTagline}>
-                AI-First Observability for the Kubernetes ecosystem.<br />
-                Engineered for high-scale enterprise environments.
-              </p>
+      {/* ── THE PROBLEM ──────────────────────────────────────────────── */}
+      <section ref={problemRef as any} style={{ padding: "96px 24px", maxWidth: 880, margin: "0 auto" }}>
+        <Eyebrow>The Problem</Eyebrow>
+        <h2 className="reveal" style={{ fontSize: "clamp(24px, 3.8vw, 44px)", fontWeight: 800, color: "#F1F5F9", lineHeight: 1.14, letterSpacing: "-0.025em", marginBottom: 38 }}>
+          Modern Kubernetes environments are too complex to debug manually.
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14, marginBottom: 32 }}>
+          {[
+            { stat: "10k+", label: "Log lines per incident",          desc: "Distributed across dozens of pods" },
+            { stat: "8 min", label: "Avg. time to locate root cause",  desc: "Without automated correlation" },
+            { stat: "4+",   label: "Teams involved per major outage",  desc: "Platform, app, data, network" },
+            { stat: "73%",  label: "Incidents with cascading impact",  desc: "A single failure ripples downstream" },
+          ].map(c => (
+            <div key={c.label} className="reveal" style={{ padding: "20px 22px", borderRadius: 8, background: "#111827", border: "1px solid #1E293B" }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#38BDF8", letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 6 }}>{c.stat}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>{c.label}</div>
+              <div style={{ fontSize: 11, color: "#64748B", lineHeight: 1.5 }}>{c.desc}</div>
             </div>
-            <div className={styles.footerLinks}>
-              <div className={styles.footerCol}>
-                <div className={styles.footerColTitle}>Product</div>
-                {["Platform", "Status", "Documentation", "Changelog"].map((l) => (
-                  <a key={l} href="#" className={styles.footerLink}>{l}</a>
-                ))}
-              </div>
-              <div className={styles.footerCol}>
-                <div className={styles.footerColTitle}>Company</div>
-                {["About", "Blog", "Careers", "Legal"].map((l) => (
-                  <a key={l} href="#" className={styles.footerLink}>{l}</a>
-                ))}
-              </div>
-              <div className={styles.footerCol}>
-                <div className={styles.footerColTitle}>Resources</div>
-                {["Community", "API Docs", "Privacy", "Security"].map((l) => (
-                  <a key={l} href="#" className={styles.footerLink}>{l}</a>
-                ))}
-              </div>
-            </div>
+          ))}
+        </div>
+        <p className="reveal" style={{ fontSize: 15, color: "#64748B", lineHeight: 1.8 }}>
+          Engineers drown in telemetry without the graph-level context to understand{" "}
+          <em style={{ color: "#94A3B8", fontStyle: "normal" }}>what failed, why it propagated, and what to fix first.</em>
+        </p>
+      </section>
+
+      {/* ── GRAPH VISIBILITY ─────────────────────────────────────────── */}
+      <section ref={graphRef as any} style={{ padding: "80px 24px", background: "#0F172A", borderTop: "1px solid #1E293B", borderBottom: "1px solid #1E293B" }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 52 }}>
+            <Eyebrow>Graph-Native Visibility</Eyebrow>
+            <h2 className="reveal" style={{ fontSize: "clamp(22px, 3.3vw, 38px)", fontWeight: 800, color: "#F1F5F9", letterSpacing: "-0.025em", marginBottom: 13 }}>
+              Infrastructure complexity made understandable.
+            </h2>
+            <p className="reveal" style={{ fontSize: 14, color: "#64748B", maxWidth: 510, margin: "0 auto", lineHeight: 1.78 }}>
+              Live topology graph reveals real-time dependency chains, failure propagation paths, and blast radius — before you open a terminal.
+            </p>
           </div>
-          <div className={styles.footerBottom}>
-            <span>© 2024 Cypher AI. All rights reserved. Built for the Kubernetes ecosystem.</span>
-            <div className={styles.footerSocials}>
-              <a href="#" className={styles.socialLink}>GitHub</a>
-              <a href="#" className={styles.socialLink}>Twitter</a>
-              <a href="#" className={styles.socialLink}>Discord</a>
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+            {[
+              { icon: "⬡", title: "Dependency Mapping",    desc: "Auto-discovered service graph across all Kubernetes workloads, ingress, databases, and caches." },
+              { icon: "◉", title: "Failure Propagation",   desc: "Watch failures cascade in real time. Understand exactly which services are downstream." },
+              { icon: "◈", title: "Blast Radius Analysis", desc: "Know the full scope of impact within seconds of detection — before remediation begins." },
+            ].map(f => (
+              <div key={f.title} className="reveal" style={{ padding: "22px 20px", borderRadius: 8, background: "#111827", border: "1px solid #1E293B" }}>
+                <div style={{ fontSize: 22, color: "#38BDF8", marginBottom: 13 }}>{f.icon}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", marginBottom: 7 }}>{f.title}</div>
+                <div style={{ fontSize: 12, color: "#64748B", lineHeight: 1.65 }}>{f.desc}</div>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
+
+      {/* ── AI INCIDENT REASONING ────────────────────────────────────── */}
+      <section ref={rcaRef as any} style={{ padding: "96px 24px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 52, alignItems: "start" }}>
+          <div>
+            <Eyebrow>AI Incident Reasoning</Eyebrow>
+            <h2 className="reveal" style={{ fontSize: "clamp(22px, 2.8vw, 36px)", fontWeight: 800, color: "#F1F5F9", letterSpacing: "-0.02em", lineHeight: 1.17, marginBottom: 18 }}>
+              Root cause, not just raw data.
+            </h2>
+            <p className="reveal" style={{ fontSize: 14, color: "#64748B", lineHeight: 1.8, marginBottom: 22 }}>
+              The AI copilot correlates topology events with telemetry to produce structured RCA reports with evidence, affected services, and actionable kubectl remediation commands.
+            </p>
+            {[
+              "Evidence-backed root cause identification",
+              "Confidence scoring per analysis",
+              "Instant kubectl remediation commands",
+              "Blast radius and service impact map",
+            ].map(f => (
+              <div key={f} className="reveal" style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9 }}>
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#38BDF8", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#94A3B8" }}>{f}</span>
+              </div>
+            ))}
+          </div>
+          <div className="reveal"><RCACard /></div>
+        </div>
+      </section>
+
+      {/* ── ARCHITECTURE ─────────────────────────────────────────────── */}
+      <section ref={archRef as any} id="architecture" style={{ padding: "80px 24px", background: "#0F172A", borderTop: "1px solid #1E293B", borderBottom: "1px solid #1E293B" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+          <Eyebrow>Architecture</Eyebrow>
+          <h2 style={{ fontSize: "clamp(20px, 2.8vw, 34px)", fontWeight: 800, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 12 }}>
+            End-to-end intelligence pipeline.
+          </h2>
+          <p style={{ fontSize: 14, color: "#64748B", marginBottom: 44, lineHeight: 1.7 }}>
+            From Kubernetes cluster events to AI-synthesized incident intelligence in seconds.
+          </p>
+          <ArchPipeline />
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────────────────── */}
+      <section ref={ctaRef as any} style={{ padding: "120px 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: 540, margin: "0 auto" }}>
+          <Eyebrow>Get Started</Eyebrow>
+          <h2 className="reveal" style={{ fontSize: "clamp(26px, 3.8vw, 46px)", fontWeight: 800, color: "#F1F5F9", letterSpacing: "-0.03em", lineHeight: 1.14, marginBottom: 16 }}>
+            Incident intelligence,<br />not incident noise.
+          </h2>
+          <p className="reveal" style={{ fontSize: 15, color: "#64748B", lineHeight: 1.75, marginBottom: 34 }}>
+            Launch the platform and start correlating your Kubernetes failures in real time.
+          </p>
+          <div className="reveal" style={{ display: "flex", gap: 11, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/" style={{ padding: "12px 30px", borderRadius: 8, fontSize: 14, fontWeight: 700, color: "#0F172A", textDecoration: "none", background: "#38BDF8", display: "inline-flex", alignItems: "center", gap: 7 }}>
+              Launch Platform <span>→</span>
+            </Link>
+            <Link href="/incidents" style={{ padding: "12px 26px", borderRadius: 8, fontSize: 14, fontWeight: 600, color: "#64748B", textDecoration: "none", background: "#111827", border: "1px solid #1E293B" }}>
+              View Incidents
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ borderTop: "1px solid #1E293B", padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ fontSize: 11, color: "#334155" }}>KubeGraph Sentinel — AI Kubernetes Incident Intelligence</div>
+        <div style={{ fontSize: 11, color: "#334155" }}>HTF 2026</div>
       </footer>
     </div>
   );

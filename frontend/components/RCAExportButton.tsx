@@ -196,21 +196,23 @@ export function RCAExportButton({ incident, rca }: Props) {
       onClick={generatePDF}
       style={{
         display: "flex", alignItems: "center", gap: 6,
-        padding: "7px 14px", borderRadius: 7, fontSize: 11, fontWeight: 600,
-        cursor: "pointer", transition: "all 0.2s",
-        background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)",
-        color: "#06b6d4",
+        padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+        cursor: "pointer", transition: "all 0.15s ease",
+        background: "rgba(56,189,248,0.08)",
+        border: "1px solid rgba(56,189,248,0.22)",
+        color: "#38BDF8",
+        fontFamily: "inherit",
       }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLButtonElement).style.background = "rgba(6,182,212,0.2)";
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(6,182,212,0.5)";
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.background = "rgba(56,189,248,0.14)";
+        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(56,189,248,0.35)";
       }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLButtonElement).style.background = "rgba(6,182,212,0.1)";
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(6,182,212,0.3)";
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.background = "rgba(56,189,248,0.08)";
+        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(56,189,248,0.22)";
       }}
     >
-      📄 Export PDF
+      Export PDF
     </button>
   );
 }
