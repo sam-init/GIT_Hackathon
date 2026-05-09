@@ -1,259 +1,118 @@
 import { Navbar } from "@/components/Navbar";
-import { fetchAttackPaths, explainAttackPaths } from "@/lib/api";
+import { AIStyledMarkdown } from "@/components/AIStyledMarkdown";
+import { explainAttackPaths, fetchAttackPaths } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
+interface AttackPath {
+  entry: string;
+  role: string;
+  path: string[];
+  accessible_secrets: string[];
+  risk_score: number;
+  type: string;
+}
+
+interface AttackExplanation {
+  explanation?: string;
+}
+
 export default async function AttackPathsPage() {
-  let paths: any[] = [];
-  let explanation: any = {};
-  try { paths = await fetchAttackPaths(); } catch {}
-  try { explanation = await explainAttackPaths(); } catch {}
+  let paths: AttackPath[] = [];
+  let explanation: AttackExplanation = {};
+  try {
+    paths = await fetchAttackPaths();
+  } catch {}
+  try {
+    explanation = await explainAttackPaths();
+  } catch {}
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Navbar />
-      <div style={{ flex: 1, overflowY: "auto", background: "#0B1020" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
 
-          {/* Page header */}
-          <div style={{ marginBottom: 28 }}>
-            <div style={{
-              fontSize: 9,
-              fontWeight: 700,
-              color: "#334155",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              marginBottom: 6,
-            }}>
+      <div style={{ flex: 1, overflowY: "auto", background: "#0B1020" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "28px 24px 32px" }}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#475569", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 8 }}>
               Security
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
               <div>
-                <h1 style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  color: "#E2E8F0",
-                  letterSpacing: "-0.02em",
-                  marginBottom: 6,
-                  lineHeight: 1.2,
-                }}>
+                <h1 style={{ fontSize: 22, fontWeight: 800, color: "#E2E8F0", lineHeight: 1.25, letterSpacing: "-0.02em" }}>
                   Attack Path Analysis
                 </h1>
-                <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.5 }}>
+                <p style={{ marginTop: 6, fontSize: 12, color: "#64748B" }}>
                   RBAC privilege escalation and lateral movement risk
                 </p>
               </div>
               {paths.length > 0 && (
-                <div style={{
-                  flexShrink: 0,
-                  background: "rgba(239,68,68,0.08)",
-                  border: "1px solid rgba(239,68,68,0.22)",
-                  borderRadius: 6,
-                  padding: "6px 14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}>
-                  <div style={{
-                    width: 5, height: 5, borderRadius: "50%",
-                    background: "#EF4444",
-                  }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#F87171" }}>
-                    {paths.length} PATH{paths.length !== 1 ? "S" : ""} DETECTED
-                  </span>
+                <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)", borderRadius: 6, padding: "6px 12px", color: "#F87171", fontSize: 11, fontWeight: 700 }}>
+                  {paths.length} Path{paths.length === 1 ? "" : "s"} Detected
                 </div>
               )}
             </div>
           </div>
 
-          {/* Empty state */}
           {paths.length === 0 ? (
-            <div style={{
-              textAlign: "center",
-              padding: "64px 24px",
-              background: "#111827",
-              borderRadius: 8,
-              border: "1px solid #1E293B",
-            }}>
-              <div style={{ fontSize: 36, color: "#10B981", marginBottom: 12 }}>✓</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>
-                No attack paths detected
-              </div>
-              <div style={{ fontSize: 13, color: "#4B5563" }}>
-                All RBAC relationships appear to follow least-privilege
-              </div>
+            <div style={{ borderRadius: 8, background: "#111827", border: "1px solid #1E293B", padding: "54px 22px", textAlign: "center" }}>
+              <div style={{ fontSize: 34, color: "#10B981", marginBottom: 10 }}>✓</div>
+              <div style={{ fontSize: 16, color: "#E2E8F0", fontWeight: 600 }}>No attack paths detected</div>
+              <div style={{ marginTop: 6, fontSize: 12, color: "#64748B" }}>All RBAC relationships appear to follow least privilege.</div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {paths.map((path, i) => (
-                <div
-                  key={i}
-                  style={{
-                    borderRadius: 8,
-                    border: "1px solid rgba(239,68,68,0.22)",
-                    background: "#111827",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Path header */}
-                  <div style={{
-                    padding: "13px 18px",
-                    borderBottom: "1px solid rgba(239,68,68,0.12)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    background: "rgba(239,68,68,0.04)",
-                  }}>
-                    <span style={{
-                      padding: "3px 10px",
-                      borderRadius: 4,
-                      fontSize: 9,
-                      fontWeight: 800,
-                      letterSpacing: "0.07em",
-                      background: "rgba(239,68,68,0.12)",
-                      color: "#F87171",
-                      textTransform: "uppercase",
-                    }}>
-                      Path {i + 1}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {paths.map((path, index) => (
+                <div key={`${path.entry}-${index}`} style={{ borderRadius: 8, border: "1px solid rgba(239,68,68,0.2)", background: "#111827", overflow: "hidden" }}>
+                  <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(239,68,68,0.12)", background: "rgba(239,68,68,0.03)", display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#F87171", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                      Path {index + 1}
                     </span>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
-                      {path.type}
-                    </div>
-                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 10, color: "#64748B" }}>Risk Score</span>
-                      <span style={{
-                        fontSize: 16,
-                        fontWeight: 800,
-                        color: "#EF4444",
-                        letterSpacing: "-0.01em",
-                      }}>
-                        {path.risk_score}
-                        <span style={{ fontSize: 10, fontWeight: 400, color: "#475569" }}>/100</span>
-                      </span>
-                    </div>
+                    <span style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 600 }}>{path.type}</span>
+                    <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748B" }}>
+                      Risk: <span style={{ color: "#EF4444", fontWeight: 700 }}>{path.risk_score}/100</span>
+                    </span>
                   </div>
 
-                  {/* Path body */}
-                  <div style={{
-                    padding: "18px 20px",
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 24,
-                  }}>
-                    {/* Escalation chain */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 20, padding: "16px 18px" }}>
                     <div>
-                      <div style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: "#334155",
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        marginBottom: 14,
-                      }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#475569", marginBottom: 10 }}>
                         Escalation Chain
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                        {path.path.map((step: string, si: number) => (
-                          <div key={si}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <div style={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: 5,
-                                flexShrink: 0,
-                                background: si === 0 || si === path.path.length - 1
-                                  ? "rgba(239,68,68,0.12)"
-                                  : "#111827",
-                                border: `1px solid ${si === 0 || si === path.path.length - 1 ? "rgba(239,68,68,0.3)" : "#1E293B"}`,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 9,
-                                color: "#F87171",
-                                fontWeight: 800,
-                              }}>
-                                {si + 1}
-                              </div>
-                              <div style={{
-                                fontSize: 11,
-                                color: "#CBD5E1",
-                                fontFamily: "'JetBrains Mono', monospace",
-                              }}>
-                                {step}
-                              </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {path.path.map((step, stepIndex) => (
+                          <div key={`${step}-${stepIndex}`} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{ width: 18, height: 18, borderRadius: 4, border: "1px solid rgba(239,68,68,0.22)", background: "rgba(239,68,68,0.08)", color: "#F87171", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              {stepIndex + 1}
                             </div>
-                            {si < path.path.length - 1 && (
-                              <div style={{
-                                width: 1,
-                                height: 12,
-                                background: "#1E293B",
-                                marginLeft: 11,
-                              }} />
-                            )}
+                            <div style={{ fontSize: 12, color: "#CBD5E1", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.55 }}>{step}</div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Accessible secrets + entry point */}
                     <div>
-                      <div style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: "#334155",
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        marginBottom: 12,
-                      }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#475569", marginBottom: 10 }}>
+                        Entry Point
+                      </div>
+                      <div style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.07)", color: "#FCD34D", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 14 }}>
+                        {path.entry}
+                      </div>
+
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#475569", marginBottom: 8 }}>
                         Accessible Secrets
                       </div>
                       {path.accessible_secrets?.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
-                          {path.accessible_secrets.map((s: string) => (
-                            <div key={s} style={{
-                              padding: "7px 12px",
-                              borderRadius: 6,
-                              background: "rgba(239,68,68,0.06)",
-                              border: "1px solid rgba(239,68,68,0.18)",
-                              fontSize: 11,
-                              color: "#F87171",
-                              fontFamily: "'JetBrains Mono', monospace",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 6,
-                            }}>
-                              <span style={{ color: "#475569", fontSize: 10 }}>⊞</span>
-                              {s}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {path.accessible_secrets.map((secret) => (
+                            <div key={secret} style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid rgba(239,68,68,0.18)", background: "rgba(239,68,68,0.06)", color: "#F87171", fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
+                              {secret}
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div style={{ fontSize: 12, color: "#334155", marginBottom: 18 }}>
-                          No secrets directly accessible
-                        </div>
+                        <div style={{ fontSize: 12, color: "#64748B" }}>No secrets directly accessible</div>
                       )}
-
-                      <div style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: "#334155",
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        marginBottom: 8,
-                      }}>
-                        Entry Point
-                      </div>
-                      <div style={{
-                        padding: "8px 12px",
-                        borderRadius: 6,
-                        fontSize: 11,
-                        background: "rgba(245,158,11,0.07)",
-                        border: "1px solid rgba(245,158,11,0.2)",
-                        color: "#FCD34D",
-                        fontFamily: "'JetBrains Mono', monospace",
-                      }}>
-                        {path.entry}
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -261,45 +120,18 @@ export default async function AttackPathsPage() {
             </div>
           )}
 
-          {/* AI Security Analysis */}
-          {explanation?.explanation && (
-            <div style={{
-              marginTop: 24,
-              padding: "20px 24px",
-              borderRadius: 8,
-              background: "#111827",
-              border: "1px solid #1E293B",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                <div style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 5,
-                  background: "rgba(56,189,248,0.1)",
-                  border: "1px solid rgba(56,189,248,0.2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  color: "#38BDF8",
-                }}>◎</div>
-                <div style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "#475569",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                }}>
+          {explanation.explanation && (
+            <div style={{ marginTop: 18, borderRadius: 8, border: "1px solid #1E293B", background: "#111827", overflow: "hidden" }}>
+              <div style={{ padding: "11px 18px", borderBottom: "1px solid #1E293B", display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 22, height: 22, borderRadius: 5, background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.2)", color: "#38BDF8", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  ◎
+                </div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#64748B" }}>
                   AI Security Analysis
                 </div>
               </div>
-              <div style={{
-                fontSize: 13,
-                color: "#CBD5E1",
-                lineHeight: 1.8,
-                whiteSpace: "pre-wrap",
-              }}>
-                {explanation.explanation}
+              <div style={{ padding: "14px 18px" }}>
+                <AIStyledMarkdown content={explanation.explanation} />
               </div>
             </div>
           )}
@@ -308,3 +140,4 @@ export default async function AttackPathsPage() {
     </div>
   );
 }
+
