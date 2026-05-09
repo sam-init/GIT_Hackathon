@@ -3,50 +3,87 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
-  { href: "/", label: "Topology", icon: "⬡" },
-  { href: "/incidents", label: "Incidents", icon: "🚨" },
-  { href: "/attack-paths", label: "Attack Paths", icon: "🔑" },
-  { href: "/copilot", label: "AI Copilot", icon: "🤖" },
+  { href: "/landing",      label: "Home",         icon: "◇" },
+  { href: "/",             label: "Topology",     icon: "⬡" },
+  { href: "/incidents",    label: "Incidents",    icon: "●" },
+  { href: "/attack-paths", label: "Attack Paths", icon: "◈" },
+  { href: "/copilot",      label: "AI Copilot",   icon: "◎" },
+  { href: "/cypherai",     label: "CypherAI",     icon: "⟡" },
 ];
 
 export function Navbar() {
   const path = usePathname();
+
   return (
     <nav style={{
-      height: 56, background: "rgba(8,12,20,0.95)", borderBottom: "1px solid #1e2d45",
-      display: "flex", alignItems: "center", padding: "0 24px",
-      backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 100,
+      height: "var(--nav-height, 52px)",
+      background: "var(--bg-base)",
+      borderBottom: "1px solid var(--border)",
+      display: "flex",
+      alignItems: "center",
+      padding: "0 20px",
+      position: "sticky",
+      top: 0,
+      zIndex: 100,
+      gap: 0,
     }}>
-      {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: 40 }}>
+      {/* Logo mark */}
+      <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, marginRight: 32 }}>
         <div style={{
-          width: 30, height: 30, borderRadius: 8,
-          background: "linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 16, boxShadow: "0 0 16px rgba(6,182,212,0.4)",
+          width: 28,
+          height: 28,
+          borderRadius: 0,
+          background: "var(--accent, #38BDF8)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 13,
+          color: "#0F172A",
+          fontWeight: 800,
+          flexShrink: 0,
         }}>⬡</div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: "#e2e8f0", letterSpacing: "-0.02em" }}>
-            KubeGraph <span style={{ color: "#06b6d4" }}>Sentinel</span>
+          <div style={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: "var(--text-primary, #E2E8F0)",
+            letterSpacing: "-0.01em",
+            lineHeight: 1.2,
+          }}>
+            KubeGraph <span style={{ color: "var(--accent, #38BDF8)", fontWeight: 700 }}>Sentinel</span>
           </div>
-          <div style={{ fontSize: 9, color: "#4a5568", letterSpacing: "0.1em" }}>AI INCIDENT INTELLIGENCE</div>
+          <div style={{
+            fontSize: 9,
+            fontWeight: 600,
+            color: "var(--text-muted, #4B5563)",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            lineHeight: 1,
+          }}>AI Incident Intelligence</div>
         </div>
-      </div>
+      </Link>
 
-      {/* Links */}
-      <div style={{ display: "flex", gap: 4 }}>
-        {NAV.map(n => {
-          const active = path === n.href;
+      {/* Nav links */}
+      <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
+        {NAV.map((n) => {
+          const active = path === n.href || (n.href !== "/" && path.startsWith(n.href));
           return (
             <Link key={n.href} href={n.href} style={{ textDecoration: "none" }}>
               <div style={{
-                padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                display: "flex", alignItems: "center", gap: 6, transition: "all 0.2s",
-                background: active ? "rgba(6,182,212,0.12)" : "transparent",
-                border: active ? "1px solid rgba(6,182,212,0.3)" : "1px solid transparent",
-                color: active ? "#06b6d4" : "#94a3b8",
+                padding: "5px 12px",
+                borderRadius: 0,
+                fontSize: 12,
+                fontWeight: active ? 600 : 500,
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                transition: "all 0.15s ease",
+                background: active ? "rgba(56,189,248,0.10)" : "transparent",
+                border: `1px solid ${active ? "rgba(56,189,248,0.22)" : "transparent"}`,
+                color: active ? "var(--accent, #38BDF8)" : "var(--text-secondary, #94A3B8)",
+                cursor: "pointer",
               }}>
-                <span>{n.icon}</span>
+                <span style={{ fontSize: 11, opacity: active ? 1 : 0.6 }}>{n.icon}</span>
                 <span>{n.label}</span>
               </div>
             </Link>
@@ -54,11 +91,22 @@ export function Navbar() {
         })}
       </div>
 
-      {/* Status */}
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-        <div className="status-dot healthy" />
-        <span style={{ fontSize: 11, color: "#10b981", fontWeight: 600 }}>CLUSTER LIVE</span>
-        <span style={{ fontSize: 10, color: "#4a5568", marginLeft: 8 }}>minikube · default</span>
+      {/* Right — cluster status */}
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Cluster health pill */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "4px 10px",
+          borderRadius: 0,
+          background: "rgba(16,185,129,0.08)",
+          border: "1px solid rgba(16,185,129,0.18)",
+        }}>
+          <span className="status-dot live" style={{ background: "#10B981" }} />
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", letterSpacing: "0.06em" }}>LIVE</span>
+        </div>
+        <span style={{ fontSize: 11, color: "var(--text-muted, #4B5563)" }}>minikube · default</span>
       </div>
     </nav>
   );

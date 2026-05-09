@@ -2,21 +2,29 @@ import { Navbar } from "@/components/Navbar";
 import { TopologyGraph } from "@/components/TopologyGraph";
 import { IncidentPanel } from "@/components/IncidentPanel";
 import { AICopilot } from "@/components/AICopilot";
-import { fetchTopology, fetchIncidents } from "@/lib/api";
+import { fetchTopology, fetchIncidents, type Incident, type TopologyData, type TopologyNode } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  let topology = { nodes: [], edges: [] };
-  let incidents: any[] = [];
+  let topology: TopologyData = { nodes: [], edges: [] };
+  let incidents: Incident[] = [];
 
   try { topology = await fetchTopology(); } catch {}
   try { incidents = await fetchIncidents(); } catch {}
 
-  const activeCount = incidents.filter(i => i.status === "active").length;
-  const criticalCount = incidents.filter(i => i.severity === "critical").length;
-  const healthyNodes = topology.nodes?.filter((n: any) => n.status === "healthy").length ?? 0;
-  const totalNodes = topology.nodes?.length ?? 0;
+  const activeCount   = incidents.filter((i) => i.status === "active").length;
+  const criticalCount = incidents.filter((i) => i.severity === "critical").length;
+  const healthyNodes  = topology.nodes?.filter((n: TopologyNode) => n.status === "healthy").length ?? 0;
+  const totalNodes    = topology.nodes?.length ?? 0;
+
+  const stats = [
+    { label: "Nodes",            value: totalNodes,    color: "#38BDF8",  neutral: true },
+    { label: "Healthy",          value: healthyNodes,  color: "#10B981",  neutral: false },
+    { label: "Active Incidents", value: activeCount,   color: activeCount   > 0 ? "#EF4444" : "#10B981", neutral: false },
+    { label: "Critical",         value: criticalCount, color: criticalCount > 0 ? "#EF4444" : "#10B981", neutral: false },
+    { label: "Connections",      value: topology.edges?.length ?? 0, color: "#64748B", neutral: true },
+  ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -24,45 +32,78 @@ export default async function HomePage() {
 
       {/* Stats bar */}
       <div style={{
-        display: "flex", gap: 0, borderBottom: "1px solid #1e2d45",
-        background: "rgba(8,12,20,0.9)",
+        display: "flex",
+        borderBottom: "1px solid var(--border)",
+        background: "var(--bg-secondary)",
+        flexShrink: 0,
       }}>
-        {[
-          { label: "TOTAL NODES", value: totalNodes, color: "#06b6d4" },
-          { label: "HEALTHY", value: healthyNodes, color: "#10b981" },
-          { label: "ACTIVE INCIDENTS", value: activeCount, color: activeCount > 0 ? "#ef4444" : "#10b981" },
-          { label: "CRITICAL", value: criticalCount, color: criticalCount > 0 ? "#ef4444" : "#10b981" },
-          { label: "EDGES", value: topology.edges?.length ?? 0, color: "#8b5cf6" },
-        ].map((s, i) => (
-          <div key={i} style={{
-            flex: 1, padding: "10px 20px",
-            borderRight: "1px solid #1e2d45",
-            display: "flex", flexDirection: "column", gap: 2,
-          }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: "#4a5568", letterSpacing: "0.12em" }}>{s.label}</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+        {stats.map((s, i) => (
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              padding: "10px 18px",
+              borderRight: i < stats.length - 1 ? "1px solid var(--border)" : "none",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <div style={{
+              fontSize: 9,
+              fontWeight: 700,
+              color: "#334155",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+            }}>
+              {s.label}
+            </div>
+            <div style={{
+              fontSize: 20,
+              fontWeight: 800,
+              color: s.color,
+              lineHeight: 1,
+              letterSpacing: "-0.01em",
+            }}>
+              {s.value}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Main layout */}
+      {/* Main content */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* Left: Topology graph */}
+        {/* Topology canvas */}
         <div style={{ flex: 1, position: "relative", minWidth: 0 }}>
           <TopologyGraph initialTopology={topology} />
         </div>
 
-        {/* Right column */}
+        {/* Right sidebar */}
         <div style={{
-          width: 320, borderLeft: "1px solid #1e2d45",
-          display: "flex", flexDirection: "column", overflow: "hidden",
+          width: 316,
+          borderLeft: "1px solid var(--border)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          background: "var(--bg-secondary)",
         }}>
-          {/* Incidents - top 50% */}
-          <div style={{ flex: 1, borderBottom: "1px solid #1e2d45", overflowY: "auto" }}>
+          {/* Incidents — top 50% */}
+          <div style={{
+            flex: 1,
+            borderBottom: "1px solid var(--border)",
+            overflowY: "auto",
+            minHeight: 0,
+          }}>
             <IncidentPanel incidents={incidents} />
           </div>
-          {/* Copilot - bottom 50% */}
-          <div style={{ flex: 1, overflowY: "hidden", display: "flex", flexDirection: "column" }}>
+          {/* Copilot — bottom 50% */}
+          <div style={{
+            flex: 1,
+            overflowY: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}>
             <AICopilot />
           </div>
         </div>

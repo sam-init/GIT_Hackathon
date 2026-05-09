@@ -1,39 +1,39 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import ReactFlow, {
   Background, Controls, MiniMap, useNodesState, useEdgesState,
-  addEdge, BackgroundVariant, MarkerType,
+  BackgroundVariant, MarkerType, type Node, type Edge, type NodeMouseHandler,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { motion } from "framer-motion";
 import { KubeNode } from "./KubeNode";
-import { simulateFailure, resetTopology } from "@/lib/api";
+import { simulateFailure, resetTopology, type TopologyData, type TopologyEdge, type TopologyNode } from "@/lib/api";
 
 const nodeTypes = { kubeNode: KubeNode };
 
+// Restrained edge color palette — single-hue variations
 const EDGE_COLORS: Record<string, string> = {
-  traffic: "#06b6d4",
-  depends: "#3b82f6",
-  database: "#f59e0b",
-  cache: "#ec4899",
-  auth: "#8b5cf6",
-  manages: "#6b7280",
-  rbac: "#ef4444",
-  "bound-to": "#ef4444",
-  accesses: "#f97316",
-  publishes: "#10b981",
+  traffic:          "#38BDF8",
+  depends:          "#64748B",
+  database:         "#F59E0B",
+  cache:            "#8B5CF6",
+  auth:             "#6366F1",
+  manages:          "#475569",
+  rbac:             "#EF4444",
+  "bound-to":       "#EF4444",
+  accesses:         "#F97316",
+  publishes:        "#10B981",
 };
 
-function buildRFNodes(nodes: any[]) {
+function buildRFNodes(nodes: TopologyNode[]): Node<TopologyNode>[] {
   return nodes.map((n, i) => ({
     id: n.id,
     type: "kubeNode",
-    position: getPosition(n.type, i, nodes.length),
+    position: getPosition(n.type, i),
     data: n,
   }));
 }
 
-function getPosition(type: string, index: number, total: number) {
+function getPosition(type: string, index: number) {
   const layers: Record<string, number> = {
     ingress: 0, service: 1, pod: 2, database: 3,
     cache: 3, "message-queue": 3,
@@ -45,37 +45,46 @@ function getPosition(type: string, index: number, total: number) {
   return { x, y };
 }
 
-function buildRFEdges(edges: any[]) {
+function buildRFEdges(edges: TopologyEdge[]): Edge[] {
   return edges.map((e) => ({
     id: e.id || `${e.source}-${e.target}`,
     source: e.source,
     target: e.target,
     animated: e.type === "traffic" || e.type === "depends",
-    style: { stroke: EDGE_COLORS[e.type] || "#1e2d45", strokeWidth: 1.5, opacity: 0.7 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: EDGE_COLORS[e.type] || "#1e2d45", width: 12, height: 12 },
+    style: {
+      stroke: EDGE_COLORS[e.type] || "#2D3F5B",
+      strokeWidth: 1.5,
+      opacity: 0.55,
+    },
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      color: EDGE_COLORS[e.type] || "#2D3F5B",
+      width: 10,
+      height: 10,
+    },
     label: e.type,
-    labelStyle: { fill: "#4a5568", fontSize: 9 },
-    labelBgStyle: { fill: "#080c14", fillOpacity: 0.8 },
+    labelStyle: { fill: "#475569", fontSize: 8 },
+    labelBgStyle: { fill: "#000000", fillOpacity: 0.92 },
   }));
 }
 
 interface TopologyGraphProps {
-  initialTopology: { nodes: any[]; edges: any[] };
-  onNodeClick?: (node: any) => void;
+  initialTopology: TopologyData;
+  onNodeClick?: (node: TopologyNode) => void;
 }
+
+const SCENARIOS = [
+  { id: "auth-svc",      label: "Auth Crash" },
+  { id: "redis",         label: "Redis Outage" },
+  { id: "postgres",      label: "DB Failure" },
+  { id: "payment-svc",   label: "Payment Spike" },
+];
 
 export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(buildRFNodes(initialTopology.nodes));
   const [edges, setEdges, onEdgesChange] = useEdgesState(buildRFEdges(initialTopology.edges));
   const [simulating, setSimulating] = useState(false);
   const [selectedScenario, setSelectedScenario] = useState("auth-svc");
-
-  const SCENARIOS = [
-    { id: "auth-svc", label: "Auth Crash" },
-    { id: "redis", label: "Redis Outage" },
-    { id: "postgres", label: "DB Failure" },
-    { id: "payment-svc", label: "Payment Spike" },
-  ];
 
   async function handleSimulate() {
     setSimulating(true);
@@ -100,49 +109,114 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
     }
   }
 
-  const onNodeClickCb = useCallback((_: any, node: any) => {
+  const onNodeClickCb: NodeMouseHandler = useCallback((_, node) => {
     onNodeClick?.(node.data);
   }, [onNodeClick]);
 
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
-      {/* Control Bar */}
+      {/* Simulation control bar */}
       <div style={{
-        position: "absolute", top: 12, left: 12, zIndex: 10,
-        display: "flex", gap: 8, alignItems: "center",
-        background: "rgba(8,12,20,0.9)", border: "1px solid #1e2d45",
-        borderRadius: 8, padding: "8px 12px", backdropFilter: "blur(8px)",
+        position: "absolute",
+        top: 12,
+        left: 12,
+        zIndex: 10,
+        display: "flex",
+        gap: 6,
+        alignItems: "center",
+        background: "var(--bg-panel)",
+        border: "1px solid var(--border)",
+        borderRadius: 0,
+        padding: "7px 12px",
       }}>
-        <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>SIMULATE:</span>
-        {SCENARIOS.map(s => (
+        {/* Label */}
+        <span style={{
+          fontSize: 9,
+          fontWeight: 700,
+          color: "#4B5563",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          marginRight: 4,
+        }}>
+          Simulate
+        </span>
+
+        {/* Scenario selector buttons */}
+        {SCENARIOS.map((s) => (
           <button
             key={s.id}
             onClick={() => setSelectedScenario(s.id)}
             style={{
-              padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
-              border: selectedScenario === s.id ? "1px solid #ef4444" : "1px solid #1e2d45",
-              background: selectedScenario === s.id ? "rgba(239,68,68,0.15)" : "rgba(17,24,39,0.8)",
-              color: selectedScenario === s.id ? "#f87171" : "#94a3b8",
-              transition: "all 0.2s",
+              padding: "4px 10px",
+              borderRadius: 0,
+              fontSize: 11,
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              border: selectedScenario === s.id
+                ? "1px solid rgba(239,68,68,0.35)"
+                : "1px solid var(--border)",
+              background: selectedScenario === s.id
+                ? "rgba(239,68,68,0.1)"
+                : "transparent",
+              color: selectedScenario === s.id ? "#F87171" : "#64748B",
+              fontFamily: "inherit",
             }}
-          >{s.label}</button>
+          >
+            {s.label}
+          </button>
         ))}
+
+        {/* Divider */}
+        <div style={{ width: 1, height: 16, background: "var(--border)", margin: "0 4px" }} />
+
+        {/* Trigger button */}
         <button
           onClick={handleSimulate}
           disabled={simulating}
           style={{
-            padding: "4px 14px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer",
-            background: "rgba(239,68,68,0.2)", border: "1px solid #ef4444", color: "#f87171",
-            opacity: simulating ? 0.6 : 1,
+            padding: "4px 12px",
+            borderRadius: 0,
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: simulating ? "not-allowed" : "pointer",
+            background: "rgba(239,68,68,0.12)",
+            border: "1px solid rgba(239,68,68,0.3)",
+            color: "#F87171",
+            opacity: simulating ? 0.5 : 1,
+            transition: "opacity 0.15s",
+            fontFamily: "inherit",
           }}
-        >⚡ {simulating ? "Simulating..." : "Trigger Failure"}</button>
+        >
+          {simulating ? "Simulating…" : "Trigger Failure"}
+        </button>
+
+        {/* Reset button */}
         <button
           onClick={handleReset}
           style={{
-            padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
-            background: "rgba(16,185,129,0.1)", border: "1px solid #10b981", color: "#6ee7b7",
+            padding: "4px 10px",
+            borderRadius: 0,
+            fontSize: 11,
+            fontWeight: 500,
+            cursor: "pointer",
+            background: "transparent",
+            border: "1px solid var(--border)",
+            color: "#64748B",
+            transition: "all 0.15s",
+            fontFamily: "inherit",
           }}
-        >↺ Reset</button>
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#10B981";
+            e.currentTarget.style.borderColor = "rgba(16,185,129,0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#64748B";
+            e.currentTarget.style.borderColor = "var(--border)";
+          }}
+        >
+          ↺ Reset
+        </button>
       </div>
 
       <ReactFlow
@@ -158,15 +232,20 @@ export function TopologyGraph({ initialTopology, onNodeClick }: TopologyGraphPro
         maxZoom={1.5}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} color="#1e2d45" gap={24} size={1} />
-        <Controls style={{ background: "#111827", border: "1px solid #1e2d45" }} />
+        <Background
+          variant={BackgroundVariant.Dots}
+          color="#333333"
+          gap={28}
+          size={1}
+        />
+        <Controls style={{ background: "var(--bg-panel)", border: "1px solid var(--border)", borderRadius: 0 }} />
         <MiniMap
-          style={{ background: "#0d1420", border: "1px solid #1e2d45" }}
+          style={{ background: "var(--bg-base)", border: "1px solid var(--border)", borderRadius: 0 }}
           nodeColor={(n) => {
             const s = n.data?.status;
-            return s === "critical" ? "#ef4444" : s === "warning" ? "#f59e0b" : "#10b981";
+            return s === "critical" ? "#EF4444" : s === "warning" ? "#F59E0B" : "#10B981";
           }}
-          maskColor="rgba(8,12,20,0.8)"
+          maskColor="rgba(0,0,0,0.65)"
         />
       </ReactFlow>
     </div>
