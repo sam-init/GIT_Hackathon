@@ -34,6 +34,7 @@ SEVERITY_MAP = {
     "Unhealthy":         "medium",
     "Pending":           "medium",
     "SecurityAlert":     "critical",
+    "TrafficSpike":      "critical",
     "Running":           "low",
 }
 

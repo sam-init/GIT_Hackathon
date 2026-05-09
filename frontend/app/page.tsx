@@ -3,7 +3,8 @@ import { IncidentPanel } from "@/components/IncidentPanel";
 import { RCAWarmup } from "@/components/RCAWarmup";
 import { TopologyGraph } from "@/components/TopologyGraph";
 import { AICopilot } from "@/components/AICopilot";
-import { fetchTopology, fetchIncidents, type Incident, type TopologyData, type TopologyNode } from "@/lib/api";
+import { fetchTopology, fetchIncidents } from "@/lib/api";
+import { monitorHomepageRequestFlood } from "@/lib/trafficAlert";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ interface IncidentSummary {
 }
 
 export default async function HomePage() {
+  await monitorHomepageRequestFlood();
   let topology: TopologyPayload = { nodes: [], edges: [] };
   let incidents: IncidentSummary[] = [];
 

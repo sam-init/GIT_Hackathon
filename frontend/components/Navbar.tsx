@@ -8,7 +8,7 @@ const NAV = [
   { href: "/incidents",    label: "Incidents",    icon: "●" },
   { href: "/attack-paths", label: "Attack Paths", icon: "◈" },
   { href: "/copilot",      label: "AI Copilot",   icon: "◎" },
-  { href: "/cypherai",     label: "CypherAI",     icon: "⟡" },
+  { href: "https://kle-hackathon.pages.dev/",     label: "CypherAI",     icon: "⟡" },
 ];
 
 export function Navbar() {
@@ -50,7 +50,7 @@ export function Navbar() {
             letterSpacing: "-0.01em",
             lineHeight: 1.2,
           }}>
-            KubeGraph <span style={{ color: "var(--accent, #38BDF8)", fontWeight: 700 }}>Sentinel</span>
+            Cypher <span style={{ color: "var(--accent, #38BDF8)", fontWeight: 700 }}>AI</span>
           </div>
           <div style={{
             fontSize: 9,
