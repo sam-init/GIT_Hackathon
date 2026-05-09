@@ -1,4 +1,4 @@
-import json
+import time
 from app.ai.client import call_llm
 from app.graph.engine import get_topology_with_status, get_attack_paths
 from app.incidents.store import get_all_incidents
@@ -8,11 +8,17 @@ You have full awareness of the cluster topology, active incidents, RBAC relation
 Answer questions about infrastructure state, incident causes, attack paths, and remediation steps.
 Be concise, technical, and actionable. Use bullet points for steps. Never hallucinate service names not in the context."""
 
+_context_cache: dict = {"timestamp": 0.0, "prompt_context": "", "mock_context": {}}
+_CONTEXT_TTL_SECONDS = 2.0
+
 
 def _build_context() -> tuple[str, dict]:
+    now = time.time()
+    if now - float(_context_cache.get("timestamp", 0.0)) < _CONTEXT_TTL_SECONDS:
+        return _context_cache["prompt_context"], _context_cache["mock_context"]
+
     topo = get_topology_with_status()
     incidents = get_all_incidents()
-    active = get_all_incidents(status="active")
     attack_paths = get_attack_paths()
 
     node_summary = ", ".join(
@@ -42,6 +48,10 @@ DETECTED ATTACK PATHS:
         "nodes": topo["nodes"],
         "attack_paths": attack_paths,
     }
+
+    _context_cache["timestamp"] = now
+    _context_cache["prompt_context"] = prompt_context
+    _context_cache["mock_context"] = mock_context
 
     return prompt_context, mock_context
 

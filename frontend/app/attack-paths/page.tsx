@@ -5,9 +5,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AttackPathsPage() {
   let paths: AttackPath[] = [];
-  let explanation: AttackPathExplanation = {};
-  try { paths = await fetchAttackPaths(); } catch {}
-  try { explanation = await explainAttackPaths(); } catch {}
+  let explanation: AttackExplanation = {};
+  const [pathsRes, explanationRes] = await Promise.allSettled([
+    fetchAttackPaths(),
+    explainAttackPaths(),
+  ]);
+  if (pathsRes.status === "fulfilled") paths = pathsRes.value;
+  if (explanationRes.status === "fulfilled") explanation = explanationRes.value;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>

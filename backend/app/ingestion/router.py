@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
-from app.incidents.store import create_incident, get_all_incidents
+from app.incidents.store import create_incident, get_incident, update_incident_rca
 from app.graph.engine import update_node_status, get_failure_propagation
+from app.ai.rca import generate_rca
 
 router = APIRouter()
 
@@ -37,8 +38,21 @@ SEVERITY_MAP = {
 }
 
 
+async def _precompute_incident_rca(incident_id: str):
+    """Background precompute to reduce first-open RCA latency in dashboard/detail views."""
+    try:
+        incident = get_incident(incident_id)
+        if not incident or incident.get("rca"):
+            return
+        rca = await generate_rca(incident)
+        update_incident_rca(incident_id, rca)
+    except Exception:
+        # Non-blocking background task: swallow errors to avoid impacting ingestion path.
+        return
+
+
 @router.post("")
-async def ingest_telemetry(payload: TelemetryPayload):
+async def ingest_telemetry(payload: TelemetryPayload, background_tasks: BackgroundTasks):
     severity = SEVERITY_MAP.get(payload.status, "medium")
     node_id = payload.node_id or payload.service
 
@@ -73,6 +87,10 @@ async def ingest_telemetry(payload: TelemetryPayload):
 
     # Register in dedup cache
     _seen_alerts[dedup_key] = incident["id"]
+
+    # Precompute RCA in background for severe incidents so UI feels instant when opened.
+    if severity in ("critical", "high"):
+        background_tasks.add_task(_precompute_incident_rca, incident["id"])
 
     return {"status": "incident_created", "incident_id": incident["id"], "severity": severity}
 

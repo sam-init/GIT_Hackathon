@@ -5,7 +5,7 @@ import hashlib
 import time
 import json
 import asyncio
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 
 # ========== CONFIGURATION (can be overridden by env) ==========
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
@@ -19,6 +19,32 @@ NVIDIA_MAX_INPUT_TOKENS = int(os.getenv("NVIDIA_MAX_INPUT_TOKENS", "8000"))  # r
 
 # ========== SIMPLE IN‑MEMORY CACHE ==========
 _cache: Dict[str, Dict[str, Any]] = {}  # key -> {"response": str, "timestamp": float, "threat": str, "confidence": float}
+_inflight: Dict[str, asyncio.Future[str]] = {}
+_http_client: httpx.AsyncClient | None = None
+
+
+def _get_http_client() -> httpx.AsyncClient:
+    """Reuse one AsyncClient to avoid connection setup overhead on every call."""
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(
+            timeout=NVIDIA_TIMEOUT,
+            http2=True,
+            limits=httpx.Limits(max_connections=30, max_keepalive_connections=20),
+        )
+    return _http_client
+
+
+def _cache_response(cache_key: str, prompt: str, response: str, context: dict | None) -> str:
+    safe_context = context or {}
+    _cache[cache_key] = {
+        "response": response,
+        "timestamp": time.time(),
+        "threat": _classify_threat(prompt, response),
+        "confidence": _extract_confidence(response),
+        "fingerprint": _fingerprint_incident(prompt, safe_context),
+    }
+    return response
 
 def _get_cache_key(prompt: str, system: str, max_tokens: int) -> str:
     """Create a unique hash key for the request."""
@@ -91,12 +117,14 @@ def _fingerprint_incident(prompt: str, context: dict) -> str:
     return "general"
 
 # ========== CORE LLM CALLER WITH CACHE, RETRIES, TRUNCATION ==========
-async def call_llm(prompt: str, system: str, max_tokens: int = 1024, context: dict = {}) -> str:
+async def call_llm(prompt: str, system: str, max_tokens: int = 1024, context: dict | None = None) -> str:
     """
     Enhanced NVIDIA LLM caller with caching, retries, prompt truncation,
     and intelligent fallback. Returns the LLM response as a string.
     Does NOT throw exceptions to the caller (always returns string).
     """
+    context = context or {}
+
     # 1. Check cache
     cache_key = _get_cache_key(prompt, system, max_tokens)
     if cache_key in _cache and _is_cache_valid(_cache[cache_key]):
@@ -106,110 +134,107 @@ async def call_llm(prompt: str, system: str, max_tokens: int = 1024, context: di
         print(f"[LLM] Cached threat: {cached.get('threat', 'unknown')}, confidence: {cached.get('confidence', 70)}%")
         return cached["response"]
 
-    # 2. If no API key, use smart mock directly (no caching of mock to keep dynamic)
-    if not NVIDIA_API_KEY:
-        print("[LLM] No API key – using smart mock")
-        mock_resp = _smart_mock_response(prompt, context)
-        # Still cache mock responses? Optional – caching mock saves nothing, but we can skip.
-        # We'll store in cache anyway for consistency (TTL will expire)
-        _cache[cache_key] = {
-            "response": mock_resp,
-            "timestamp": time.time(),
-            "threat": _classify_threat(prompt, mock_resp),
-            "confidence": _extract_confidence(mock_resp)
+    # 1.5. In-flight de-dup: share one request for identical prompt/model requests
+    inflight = _inflight.get(cache_key)
+    if inflight:
+        print(f"[LLM] In-flight hit for key {cache_key[:8]}...")
+        return await inflight
+
+    loop = asyncio.get_running_loop()
+    future: asyncio.Future[str] = loop.create_future()
+    _inflight[cache_key] = future
+
+    try:
+        # 2. If no API key, use smart mock directly (no caching of mock to keep dynamic)
+        if not NVIDIA_API_KEY:
+            print("[LLM] No API key – using smart mock")
+            mock_resp = _smart_mock_response(prompt, context)
+            result = _cache_response(cache_key, prompt, mock_resp, context)
+            future.set_result(result)
+            return result
+
+        # 3. Truncate prompt if needed
+        safe_prompt, safe_system = _truncate_prompt(prompt, system, max_tokens)
+
+        # 4. Prepare request
+        headers = {
+            "Authorization": f"Bearer {NVIDIA_API_KEY}",
+            "Content-Type": "application/json",
         }
-        return mock_resp
+        payload = {
+            "model": NVIDIA_MODEL,
+            "messages": [
+                {"role": "system", "content": safe_system},
+                {"role": "user", "content": safe_prompt},
+            ],
+            "max_tokens": max_tokens,
+            "temperature": NVIDIA_TEMPERATURE,
+        }
 
-    # 3. Truncate prompt if needed
-    safe_prompt, safe_system = _truncate_prompt(prompt, system, max_tokens)
-
-    # 4. Prepare request
-    headers = {
-        "Authorization": f"Bearer {NVIDIA_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": NVIDIA_MODEL,
-        "messages": [
-            {"role": "system", "content": safe_system},
-            {"role": "user", "content": safe_prompt},
-        ],
-        "max_tokens": max_tokens,
-        "temperature": NVIDIA_TEMPERATURE,
-    }
-
-    # 5. Retry loop with exponential backoff
-    last_error = None
-    for attempt in range(NVIDIA_MAX_RETRIES):
-        try:
-            async with httpx.AsyncClient(timeout=NVIDIA_TIMEOUT) as client:
+        # 5. Retry loop with exponential backoff
+        last_error = None
+        client = _get_http_client()
+        for attempt in range(NVIDIA_MAX_RETRIES):
+            try:
                 print(f"[LLM] Attempt {attempt+1}/{NVIDIA_MAX_RETRIES} – sending request")
                 resp = await client.post(
                     f"{NVIDIA_BASE_URL}/chat/completions",
                     json=payload,
-                    headers=headers
+                    headers=headers,
                 )
                 resp.raise_for_status()
                 result = resp.json()["choices"][0]["message"]["content"]
-
-                # NEW: Extract metadata
-                threat = _classify_threat(prompt, result)
-                confidence = _extract_confidence(result)
-                fingerprint = _fingerprint_incident(prompt, context)
-
-                # Store in cache
-                _cache[cache_key] = {
-                    "response": result,
-                    "timestamp": time.time(),
-                    "threat": threat,
-                    "confidence": confidence,
-                    "fingerprint": fingerprint
-                }
-                print(f"[LLM] Success. Threat: {threat}, Confidence: {confidence}%")
+                result = _cache_response(cache_key, prompt, result, context)
+                print(f"[LLM] Success. Threat: {_cache[cache_key]['threat']}, Confidence: {_cache[cache_key]['confidence']}%")
+                future.set_result(result)
                 return result
 
-        except httpx.TimeoutException as e:
-            last_error = e
-            wait = 2 ** attempt
-            print(f"[LLM] Timeout (attempt {attempt+1}), retrying in {wait}s")
-            await asyncio.sleep(wait)
-        except httpx.HTTPStatusError as e:
-            last_error = e
-            if e.response.status_code == 429:  # rate limit
-                wait = 2 ** attempt * 2
-                print(f"[LLM] Rate limited (429), retrying in {wait}s")
-                await asyncio.sleep(wait)
-            elif 500 <= e.response.status_code < 600:
+            except httpx.TimeoutException as e:
+                last_error = e
                 wait = 2 ** attempt
-                print(f"[LLM] Server error {e.response.status_code}, retrying")
+                print(f"[LLM] Timeout (attempt {attempt+1}), retrying in {wait}s")
                 await asyncio.sleep(wait)
-            else:
-                # Client error – no retry
-                print(f"[LLM] Client error {e.response.status_code}: {e.response.text[:200]}")
+            except httpx.HTTPStatusError as e:
+                last_error = e
+                if e.response.status_code == 429:  # rate limit
+                    wait = 2 ** attempt * 2
+                    print(f"[LLM] Rate limited (429), retrying in {wait}s")
+                    await asyncio.sleep(wait)
+                elif 500 <= e.response.status_code < 600:
+                    wait = 2 ** attempt
+                    print(f"[LLM] Server error {e.response.status_code}, retrying")
+                    await asyncio.sleep(wait)
+                else:
+                    # Client error – no retry
+                    print(f"[LLM] Client error {e.response.status_code}: {e.response.text[:200]}")
+                    break
+            except Exception as e:
+                last_error = e
+                print(f"[LLM] Unexpected error: {type(e).__name__} – {e}")
                 break
-        except Exception as e:
-            last_error = e
-            print(f"[LLM] Unexpected error: {type(e).__name__} – {e}")
-            break
 
-    # 6. All retries failed – fallback to smart mock
-    print(f"[LLM] All retries failed. Falling back to mock. Last error: {last_error}")
-    mock_resp = _smart_mock_response(prompt, context)
-    _cache[cache_key] = {
-        "response": mock_resp,
-        "timestamp": time.time(),
-        "threat": _classify_threat(prompt, mock_resp),
-        "confidence": _extract_confidence(mock_resp)
-    }
-    return mock_resp
+        # 6. All retries failed – fallback to smart mock
+        print(f"[LLM] All retries failed. Falling back to mock. Last error: {last_error}")
+        mock_resp = _smart_mock_response(prompt, context)
+        result = _cache_response(cache_key, prompt, mock_resp, context)
+        future.set_result(result)
+        return result
+    except Exception as e:
+        if not future.done():
+            future.set_result(_smart_mock_response(prompt, context))
+        print(f"[LLM] Unexpected top-level failure, fallback used: {type(e).__name__} – {e}")
+        return future.result()
+    finally:
+        _inflight.pop(cache_key, None)
 
 
 # ========== EXISTING SMART MOCK (unchanged, but we keep exactly as you wrote) ==========
-def _smart_mock_response(prompt: str, context: dict = {}) -> str:
+def _smart_mock_response(prompt: str, context: dict | None = None) -> str:
     """
     Context-aware mock response that actually reads the user's question
     and answers from the cluster context. Used when no NVIDIA_API_KEY is set.
     """
+    context = context or {}
     q = prompt.lower()
     incidents = context.get("incidents", [])
     nodes = context.get("nodes", [])
