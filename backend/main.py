@@ -18,7 +18,7 @@ from app.ai.router import router as ai_router
 from app.incidents.store import create_incident, get_all_incidents
 
 app = FastAPI(
-    title="KubeGraph Sentinel API",
+    title="Cypher AI API",
     description="AI-Powered Kubernetes Incident Intelligence Platform",
     version="1.0.0",
 )
@@ -126,7 +126,7 @@ async def health():
 @app.get("/")
 async def root():
     return {
-        "service": "KubeGraph Sentinel",
+        "service": "Cypher AI",
         "version": "1.0.0",
         "docs": "/docs",
     }

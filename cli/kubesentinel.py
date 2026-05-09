@@ -5,6 +5,8 @@ import click
 import httpx
 import json
 import os
+import shlex
+import subprocess
 import sys
 from rich.console import Console
 from rich.table import Table
@@ -62,9 +64,103 @@ def api_post(path: str, data: dict = {}) -> dict:
         sys.exit(1)
 
 
-@click.group()
+def _print_agent_command_help():
+    console.print(
+        Panel(
+            "[bold cyan]KubeSentinel Agent Mode[/bold cyan]\n"
+            "Uses the same backend Copilot context as the dashboard.\n\n"
+            "[dim]Agent controls:[/dim]\n"
+            "  [bold]/help[/bold]   Show commands\n"
+            "  [bold]/clear[/bold]  Reset conversation memory\n"
+            "  [bold]/exit[/bold]   Quit agent mode\n\n"
+            "[dim]CLI commands you can run directly here:[/dim]\n"
+            "  [bold]scan[/bold]\n"
+            "  [bold]incidents[/bold] [dim][--status active] [--severity critical][/dim]\n"
+            "  [bold]analyze[/bold] [dim]<service>[/dim]\n"
+            "  [bold]trace[/bold] [dim]<service>[/dim]\n"
+            "  [bold]attack-paths[/bold]\n"
+            "  [bold]blast-radius[/bold] [dim]<service>[/dim]\n"
+            "  [bold]explain[/bold] [dim][topic][/dim]\n"
+            "  [bold]logs[/bold] [dim]<service> [--ai][/dim]",
+            border_style="cyan",
+        )
+    )
+
+
+def _run_agent_command(line: str) -> bool:
+    """Run a CLI subcommand from inside agent. Returns True if handled."""
+    try:
+        parts = shlex.split(line)
+    except ValueError as e:
+        console.print(f"[red]Command parse error:[/red] {e}")
+        return True
+
+    if not parts:
+        return True
+
+    cmd = parts[0]
+    if cmd not in {"scan", "incidents", "analyze", "trace", "attack-paths", "blast-radius", "explain", "logs"}:
+        return False
+
+    proc = subprocess.run([sys.executable, os.path.abspath(__file__), *parts], check=False)
+    if proc.returncode != 0:
+        console.print(f"[red]Command failed with exit code {proc.returncode}[/red]")
+    return True
+
+
+def _run_agent(history_limit: int):
+    history: list[dict] = []
+    _print_agent_command_help()
+
+    while True:
+        try:
+            user_msg = console.input("[bold cyan]you[/bold cyan] > ").strip()
+        except (KeyboardInterrupt, EOFError):
+            console.print("\n[dim]Session ended.[/dim]\n")
+            break
+
+        if not user_msg:
+            continue
+
+        msg = user_msg.lower()
+        if msg in {"/exit", "exit", "quit"}:
+            console.print("[dim]Session ended.[/dim]\n")
+            break
+
+        if msg in {"/help", "help"}:
+            _print_agent_command_help()
+            continue
+
+        if msg == "/clear":
+            history.clear()
+            console.print("[green]Conversation memory cleared.[/green]")
+            continue
+
+        if _run_agent_command(user_msg):
+            continue
+
+        with Progress(SpinnerColumn(), TextColumn("[cyan]Agent thinking..."), transient=True) as p:
+            p.add_task("agent")
+            result = api_post("/copilot/chat", {
+                "message": user_msg,
+                "history": history[-history_limit:],
+            })
+
+        assistant_msg = result.get("response", "No response")
+        history.append({"role": "user", "content": user_msg})
+        history.append({"role": "assistant", "content": assistant_msg})
+
+        console.print(Panel(
+            assistant_msg,
+            title="[cyan]agent[/cyan]",
+            border_style="cyan",
+        ))
+
+
+@click.group(invoke_without_command=True)
 @click.version_option("1.0.0", prog_name="kubesentinel")
-def cli():
+@click.pass_context
+def cli(ctx):
     """
     \b
     ██╗  ██╗██╗   ██╗██████╗ ███████╗███████╗███╗   ██╗████████╗██╗███╗   ██╗███████╗██╗
@@ -76,7 +172,8 @@ def cli():
 
     AI-Powered Kubernetes Incident Intelligence Platform
     """
-    pass
+    if ctx.invoked_subcommand is None:
+        _run_agent(history_limit=8)
 
 
 @cli.command()
@@ -400,6 +497,13 @@ def explain(topic):
     console.print()
     console.print(Panel(text, title=f"[cyan]🤖 AI Explanation: {topic}[/cyan]", border_style="cyan"))
     console.print()
+
+
+@cli.command("agent")
+@click.option("--history-limit", default=8, show_default=True, help="How many recent messages to send as context")
+def agent_cmd(history_limit: int):
+    """Run an interactive AI Copilot agent session in your terminal."""
+    _run_agent(history_limit=history_limit)
 
 
 if __name__ == "__main__":

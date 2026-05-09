@@ -86,7 +86,7 @@ export function RCAExportButton({ incident, rca }: Props) {
   <!-- Header -->
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #0891b2;">
     <div>
-      <div style="font-size:11px;font-weight:700;color:#0891b2;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">KubeGraph Sentinel</div>
+      <div style="font-size:11px;font-weight:700;color:#0891b2;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">Cypher AI</div>
       <div style="font-size:22px;font-weight:800;color:#0f172a;line-height:1.2;">Root Cause Analysis Report</div>
       <div style="font-size:12px;color:#6b7280;margin-top:4px;">AI-Powered Kubernetes Incident Intelligence</div>
     </div>
@@ -173,7 +173,7 @@ export function RCAExportButton({ incident, rca }: Props) {
 
   <!-- Footer -->
   <div style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-size:11px;color:#9ca3af;">KubeGraph Sentinel — AI-Powered Kubernetes Incident Intelligence</div>
+    <div style="font-size:11px;color:#9ca3af;">Cypher AI — AI-Powered Kubernetes Incident Intelligence</div>
     <div style="font-size:11px;color:#9ca3af;">Confidential — Internal Use Only</div>
   </div>
 

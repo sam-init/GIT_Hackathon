@@ -4,7 +4,7 @@ You are a senior staff-level platform engineer, SRE architect, Kubernetes engine
 
 Your task is to build a complete production-style hackathon MVP called:
 
-# “KubeGraph Sentinel — AI-Powered Kubernetes Incident Intelligence Platform”
+# “Cypher AI — AI-Powered Kubernetes Incident Intelligence Platform”
 
 This is NOT:
 
@@ -843,7 +843,7 @@ Use:
 
 # LOCAL SETUP GUIDE
 
-> Everything you need to run KubeGraph Sentinel on your machine from scratch.
+> Everything you need to run Cypher AI on your machine from scratch.
 
 ---
 
@@ -1117,7 +1117,7 @@ npm run dev
 
 # MINIKUBE INTEGRATION GUIDE
 
-> How to connect KubeGraph Sentinel to your real minikube cluster running in WSL + Docker.
+> How to connect Cypher AI to your real minikube cluster running in WSL + Docker.
 
 ---
 

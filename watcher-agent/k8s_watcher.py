@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KubeGraph Sentinel — Real Kubernetes Watcher Agent (Python)
+Cypher AI — Real Kubernetes Watcher Agent (Python)
 Connects to your minikube cluster via KUBECONFIG and watches for real pod failures.
 Sends structured telemetry to the backend at KUBESENTINEL_API.
 """
@@ -232,7 +232,7 @@ def main():
         log.error("kubernetes package not installed. Run: pip install kubernetes")
         sys.exit(1)
 
-    log.info("KubeGraph Sentinel — Real Kubernetes Watcher starting")
+    log.info("Cypher AI — Real Kubernetes Watcher starting")
     log.info(f"Namespaces: {WATCH_NAMESPACES}")
     log.info(f"Backend: {BACKEND_URL}")
     log.info(f"Poll interval: {POLL_INTERVAL}s")

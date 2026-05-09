@@ -93,7 +93,7 @@ func getEnv(key, fallback string) string {
 }
 
 func main() {
-	log.Println("[watcher] KubeGraph Sentinel Watcher Agent starting...")
+	log.Println("[watcher] Cypher AI Watcher Agent starting...")
 	log.Printf("[watcher] Backend: %s | Mock: %v | Interval: %ds", backendURL, mockMode, intervalSeconds)
 
 	if mockMode {

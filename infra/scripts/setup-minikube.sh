@@ -1,5 +1,5 @@
 #!/bin/bash
-# KubeGraph Sentinel — Minikube Setup Script
+# Cypher AI — Minikube Setup Script
 # Deploys all demo services to your minikube cluster
 
 set -e
@@ -23,7 +23,7 @@ if ! command -v "${KUBECTL_BIN}" >/dev/null 2>&1; then
 fi
 
 echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${CYAN}  KubeGraph Sentinel — Minikube Setup${NC}"
+echo -e "${CYAN}  Cypher AI — Minikube Setup${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 
 # Verify cluster is reachable

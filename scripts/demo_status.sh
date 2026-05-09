@@ -1,5 +1,5 @@
 #!/bin/bash
-# KubeGraph Sentinel — Judge Demo Status
+# Cypher AI — Judge Demo Status
 export KUBECONFIG=/home/shreyas/.kube/config
 
 CYAN='\033[0;36m'; GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'
@@ -75,7 +75,7 @@ kubectl get secrets -n kubesentinel-demo --no-headers 2>/dev/null | grep -v "def
 done
 
 # Backend incidents
-echo -e "\n${BOLD}  🚨 LIVE INCIDENTS (via KubeGraph Sentinel API)${NC}"
+echo -e "\n${BOLD}  🚨 LIVE INCIDENTS (via Cypher AI API)${NC}"
 python3 -c "
 import httpx, sys
 try:

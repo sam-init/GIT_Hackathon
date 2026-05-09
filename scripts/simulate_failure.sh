@@ -1,9 +1,9 @@
 #!/bin/bash
-# KubeGraph Sentinel — Failure Simulation Scripts
+# Cypher AI — Failure Simulation Scripts
 
 API="http://localhost:8000"
 
-echo "🚀 KubeGraph Sentinel — Failure Simulator"
+echo "🚀 Cypher AI — Failure Simulator"
 echo "=========================================="
 
 simulate() {

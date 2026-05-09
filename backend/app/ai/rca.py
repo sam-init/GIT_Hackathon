@@ -1,7 +1,7 @@
 import json
 from app.ai.client import call_llm
 
-SYSTEM_PROMPT = """You are KubeGraph Sentinel, an expert Kubernetes SRE AI.
+SYSTEM_PROMPT = """You are Cypher AI, an expert Kubernetes SRE AI.
 You analyze infrastructure incidents using topology relationships, telemetry, and graph context.
 You do NOT just read logs. You understand service dependencies, failure propagation, RBAC relationships, and attack paths.
 Always respond with structured JSON matching the RCA schema exactly."""

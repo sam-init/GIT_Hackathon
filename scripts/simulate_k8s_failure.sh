@@ -1,5 +1,5 @@
 #!/bin/bash
-# KubeGraph Sentinel — Real Kubernetes Failure Simulator
+# Cypher AI — Real Kubernetes Failure Simulator
 # Triggers actual pod failures in your minikube cluster
 
 set -e
@@ -152,7 +152,7 @@ case "${1:-menu}" in
   reset)    scenario_reset ;;
   status)   scenario_status ;;
   menu|*)
-    echo -e "\n${CYAN}KubeGraph Sentinel — Kubernetes Failure Simulator${NC}"
+    echo -e "\n${CYAN}Cypher AI — Kubernetes Failure Simulator${NC}"
     echo -e "${CYAN}Targets real minikube cluster${NC}\n"
     echo "Usage: ./simulate_k8s_failure.sh <scenario>"
     echo ""

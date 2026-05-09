@@ -26,7 +26,7 @@
       { "time": "10:03:01", "event": "login-api upstream auth failures began (503)", "type": "error" },
       { "time": "10:03:45", "event": "payment-service auth validation failures (401)", "type": "warning" },
       { "time": "10:04:10", "event": "admin-dashboard session invalidation cascade", "type": "warning" },
-      { "time": "10:04:47", "event": "KubeGraph Sentinel incident INC-001 created", "type": "detection" }
+      { "time": "10:04:47", "event": "Cypher AI incident INC-001 created", "type": "detection" }
     ],
     "rca": {
       "root_cause": "Database connection pool exhaustion triggered by auth-service v2.4.1 deployment introducing connection leak in PostgreSQL pool initializer.",
@@ -78,7 +78,7 @@
       { "time": "09:45:00", "event": "Redis OOMKilled — pod evicted by kubelet", "type": "error" },
       { "time": "09:45:38", "event": "auth-service session cache miss rate: 100%", "type": "error" },
       { "time": "09:46:12", "event": "order-service cart data unavailable", "type": "error" },
-      { "time": "09:47:00", "event": "KubeGraph Sentinel incident INC-002 created", "type": "detection" }
+      { "time": "09:47:00", "event": "Cypher AI incident INC-002 created", "type": "detection" }
     ],
     "rca": {
       "root_cause": "Redis cluster OOMKilled due to unbounded memory growth from order-service session accumulation without TTL expiration configured.",

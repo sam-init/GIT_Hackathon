@@ -134,7 +134,7 @@ export default function CopilotPage() {
                 color: "#E2E8F0",
                 letterSpacing: "-0.01em",
               }}>
-                KubeGraph Sentinel Copilot
+                Cypher AI Copilot
               </div>
               <div style={{ fontSize: 11, color: "#475569" }}>
                 Infrastructure-aware · Graph-native · NVIDIA Powered
