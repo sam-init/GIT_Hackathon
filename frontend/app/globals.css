@@ -2,22 +2,22 @@
 
 /* ============================================================
    ENTERPRISE DESIGN TOKENS
-   Target: Datadog / Grafana / Linear / Vercel aesthetic
+   Professional black / zero-radius chrome
    ============================================================ */
 :root {
   /* Backgrounds */
-  --bg-base:        #0B1020;
-  --bg-primary:     #0F172A;
-  --bg-secondary:   #111827;
-  --bg-panel:       #111827;
-  --bg-panel-hover: #1E293B;
-  --bg-elevated:    #1E293B;
-  --bg-input:       #0F172A;
+  --bg-base:        #000000;
+  --bg-primary:     #0a0a0a;
+  --bg-secondary:   #0d0d0d;
+  --bg-panel:       #0d0d0d;
+  --bg-panel-hover: #141414;
+  --bg-elevated:    #141414;
+  --bg-input:       #0a0a0a;
 
   /* Borders */
-  --border:         #1E293B;
-  --border-subtle:  #172032;
-  --border-medium:  #2D3F5B;
+  --border:         #262626;
+  --border-subtle:  #1a1a1a;
+  --border-medium:  #404040;
   --border-focus:   #38BDF8;
 
   /* Text */
@@ -62,12 +62,12 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 10px;
-  --radius-2xl: 12px;
+  /* Radius — square edges */
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
 
   /* Shadows — subtle, no colored glow */
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.35);
@@ -103,7 +103,7 @@ body {
    ============================================================ */
 ::-webkit-scrollbar          { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track    { background: transparent; }
-::-webkit-scrollbar-thumb    { background: var(--border-medium); border-radius: 3px; }
+::-webkit-scrollbar-thumb    { background: var(--border-medium); border-radius: 0; }
 ::-webkit-scrollbar-thumb:hover { background: #3D5270; }
 
 /* ============================================================
@@ -174,7 +174,7 @@ body {
   align-items: center;
   gap: 3px;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 0;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -195,7 +195,7 @@ body {
 .status-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 0;
   display: inline-block;
   flex-shrink: 0;
 }
@@ -262,7 +262,7 @@ body {
 
 .btn-primary {
   background: var(--accent);
-  color: #0F172A;
+  color: #0a0a0a;
   border-color: var(--accent);
 }
 .btn-primary:hover { background: #7DD3FC; }

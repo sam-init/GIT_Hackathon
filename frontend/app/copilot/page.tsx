@@ -33,9 +33,9 @@ export default function CopilotPage() {
         {/* Left capabilities sidebar */}
         <div style={{
           width: 260,
-          borderRight: "1px solid #1E293B",
+          borderRight: "1px solid var(--border)",
           padding: "24px 16px",
-          background: "#0F172A",
+          background: "var(--bg-secondary)",
           overflowY: "auto",
           flexShrink: 0,
         }}>
@@ -54,9 +54,9 @@ export default function CopilotPage() {
               <div key={c.title} style={{
                 marginBottom: 8,
                 padding: "11px 12px",
-                borderRadius: 7,
-                background: "#111827",
-                border: "1px solid #1E293B",
+                borderRadius: 0,
+                background: "var(--bg-panel)",
+                border: "1px solid var(--border)",
                 transition: "border-color 0.15s",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
@@ -85,13 +85,13 @@ export default function CopilotPage() {
             {SUGGESTED_QUERIES.map((q) => (
               <div key={q} style={{
                 padding: "8px 10px",
-                borderRadius: 6,
+                borderRadius: 0,
                 marginBottom: 5,
                 fontSize: 11,
                 color: "#64748B",
                 cursor: "pointer",
                 lineHeight: 1.4,
-                border: "1px solid #1E293B",
+                border: "1px solid var(--border)",
                 transition: "all 0.15s",
               }}>
                 {q}
@@ -101,12 +101,12 @@ export default function CopilotPage() {
         </div>
 
         {/* Main chat area */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#0B1020" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "var(--bg-base)" }}>
           {/* Chat header */}
           <div style={{
             padding: "14px 20px",
-            borderBottom: "1px solid #1E293B",
-            background: "#0F172A",
+            borderBottom: "1px solid var(--border)",
+            background: "var(--bg-secondary)",
             display: "flex",
             alignItems: "center",
             gap: 14,
@@ -116,7 +116,7 @@ export default function CopilotPage() {
             <div style={{
               width: 34,
               height: 34,
-              borderRadius: 8,
+              borderRadius: 0,
               background: "rgba(56,189,248,0.1)",
               border: "1px solid rgba(56,189,248,0.2)",
               display: "flex",

@@ -19,7 +19,7 @@ const NODE_TYPE_ACCENT: Record<string, { bg: string; border: string; label: stri
   "service-account": { bg: "#0F0F2B", border: "#1E1E5E", label: "SA" },
   "cluster-role":    { bg: "#1A0A0A", border: "#3D1515", label: "CR" },
   secret:            { bg: "#1A0A0A", border: "#3D1515", label: "SEC" },
-  unknown:           { bg: "#111827", border: "#1E293B", label: "?" },
+  unknown:           { bg: "#0d0d0d", border: "#262626", label: "?" },
 };
 
 // Text icons (no emoji on node cards for clarity)
@@ -52,7 +52,7 @@ export function KubeNode({ data }: NodeProps) {
       style={{
         background: cardBg,
         border: `1px solid ${borderColor}`,
-        borderRadius: 8,
+        borderRadius: 0,
         padding: "9px 12px 10px",
         minWidth: 130,
         maxWidth: 165,
@@ -91,7 +91,7 @@ export function KubeNode({ data }: NodeProps) {
         <div style={{
           width: 6,
           height: 6,
-          borderRadius: "50%",
+          borderRadius: 0,
           background: statColor,
           flexShrink: 0,
           // subtle pulse for critical only — no glow rings
@@ -132,7 +132,7 @@ export function KubeNode({ data }: NodeProps) {
           alignItems: "center",
           gap: 4,
         }}>
-          <div style={{ width: 5, height: 5, borderRadius: "50%", background: statColor, flexShrink: 0 }} />
+          <div style={{ width: 5, height: 5, borderRadius: 0, background: statColor, flexShrink: 0 }} />
           <span style={{
             fontSize: 9,
             fontWeight: 700,

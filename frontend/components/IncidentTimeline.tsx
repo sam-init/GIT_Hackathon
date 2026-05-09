@@ -41,7 +41,7 @@ export function IncidentTimeline({ events }: { events: TimelineEvent[] }) {
         top: 22,
         bottom: 22,
         width: 1,
-        background: "linear-gradient(to bottom, #1E293B 70%, transparent)",
+        background: "linear-gradient(to bottom, var(--border) 70%, transparent)",
       }} />
 
       {events.map((ev, i) => {
@@ -59,9 +59,9 @@ export function IncidentTimeline({ events }: { events: TimelineEvent[] }) {
             <div style={{
               width: 24,
               height: 24,
-              borderRadius: "50%",
+              borderRadius: 0,
               flexShrink: 0,
-              background: "#111827",
+              background: "var(--bg-panel)",
               border: `1.5px solid ${color}`,
               display: "flex",
               alignItems: "center",
@@ -71,7 +71,7 @@ export function IncidentTimeline({ events }: { events: TimelineEvent[] }) {
               <div style={{
                 width: 6,
                 height: 6,
-                borderRadius: "50%",
+                borderRadius: 0,
                 background: color,
               }} />
             </div>
@@ -88,7 +88,7 @@ export function IncidentTimeline({ events }: { events: TimelineEvent[] }) {
                   background: `${color}12`,
                   border: `1px solid ${color}25`,
                   padding: "1px 5px",
-                  borderRadius: 3,
+                  borderRadius: 0,
                 }}>
                   {label}
                 </span>

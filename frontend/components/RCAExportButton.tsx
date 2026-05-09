@@ -1,4 +1,5 @@
 "use client";
+import type { Incident } from "@/lib/api";
 
 interface RCA {
   root_cause?: string;
@@ -11,7 +12,7 @@ interface RCA {
 }
 
 interface Props {
-  incident: any;
+  incident: Incident;
   rca: RCA;
 }
 
@@ -196,7 +197,7 @@ export function RCAExportButton({ incident, rca }: Props) {
       onClick={generatePDF}
       style={{
         display: "flex", alignItems: "center", gap: 6,
-        padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+        padding: "5px 12px", borderRadius: 0, fontSize: 11, fontWeight: 600,
         cursor: "pointer", transition: "all 0.15s ease",
         background: "rgba(56,189,248,0.08)",
         border: "1px solid rgba(56,189,248,0.22)",

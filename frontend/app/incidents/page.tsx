@@ -1,12 +1,12 @@
 import { Navbar } from "@/components/Navbar";
 import { IncidentPanel } from "@/components/IncidentPanel";
 import { IncidentTable } from "@/components/IncidentTable";
-import { fetchIncidents } from "@/lib/api";
+import { fetchIncidents, type Incident } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export default async function IncidentsPage() {
-  let incidents: any[] = [];
+  let incidents: Incident[] = [];
   try { incidents = await fetchIncidents(); } catch {}
 
   const activeCount       = incidents.filter((i) => i.status === "active").length;
@@ -21,16 +21,16 @@ export default async function IncidentsPage() {
         {/* Sidebar */}
         <div style={{
           width: 340,
-          borderRight: "1px solid #1E293B",
+          borderRight: "1px solid var(--border)",
           overflowY: "auto",
-          background: "#0F172A",
+          background: "var(--bg-secondary)",
           flexShrink: 0,
         }}>
           <IncidentPanel incidents={incidents} />
         </div>
 
         {/* Main content */}
-        <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto", background: "#0B1020" }}>
+        <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto", background: "var(--bg-base)" }}>
 
           {/* Page header */}
           <div style={{ marginBottom: 28 }}>
@@ -73,7 +73,7 @@ export default async function IncidentsPage() {
             ].map((s) => (
               <div key={s.label} style={{
                 padding: "18px 20px",
-                borderRadius: 8,
+                borderRadius: 0,
                 background: s.bg,
                 border: `1px solid ${s.border}`,
               }}>
