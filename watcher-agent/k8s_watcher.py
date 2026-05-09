@@ -22,8 +22,21 @@ log = logging.getLogger("kubesentinel-watcher")
 
 BACKEND_URL = os.getenv("WATCHER_BACKEND_URL", "http://localhost:8000")
 WATCH_NAMESPACES = os.getenv("WATCH_NAMESPACES", "kubesentinel-demo,kubesentinel-data").split(",")
+WATCH_NAMESPACE_SET = {ns.strip() for ns in WATCH_NAMESPACES if ns.strip()}
 POLL_INTERVAL = int(os.getenv("WATCHER_POLL_INTERVAL", "15"))
 KUBECONFIG = os.getenv("KUBECONFIG", os.path.expanduser("~/.kube/config"))
+WATCH_RBAC_SCOPE_TO_WATCH_NAMESPACES = os.getenv("WATCH_RBAC_SCOPE_TO_WATCH_NAMESPACES", "true").lower() == "true"
+WATCH_RBAC_IGNORE_BINDINGS = {
+    b.strip() for b in os.getenv("WATCH_RBAC_IGNORE_BINDINGS", "minikube-rbac").split(",") if b.strip()
+}
+WATCH_RBAC_IGNORE_NAMESPACES = {
+    ns.strip()
+    for ns in os.getenv(
+        "WATCH_RBAC_IGNORE_NAMESPACES",
+        "kube-system,kube-public,kube-node-lease",
+    ).split(",")
+    if ns.strip()
+}
 
 # Map k8s deployment names → topology graph node IDs
 NODE_ID_MAP = {
@@ -143,23 +156,40 @@ def check_risky_rbac(rbac_v1):
     try:
         bindings = rbac_v1.list_cluster_role_binding(watch=False)
         for binding in bindings.items:
-            if binding.role_ref.name == "cluster-admin":
-                for subject in (binding.subjects or []):
-                    if subject.kind == "ServiceAccount":
-                        log.warning(f"[RBAC] RISK: {subject.name} in {subject.namespace} → cluster-admin")
-                        send_telemetry({
-                            "service": subject.name,
-                            "status": "SecurityAlert",
-                            "restart_count": 0,
-                            "recent_deployment": False,
-                            "logs_summary": (
-                                f"AUDIT: ServiceAccount {subject.name} bound to ClusterRole cluster-admin. "
-                                f"Binding: {binding.metadata.name}. "
-                                f"Potential privilege escalation path detected."
-                            ),
-                            "namespace": subject.namespace or "default",
-                            "node_id": f"sa-{subject.name.replace('-sa', '')}",
-                        })
+            binding_name = (binding.metadata.name or "").strip()
+            if binding_name in WATCH_RBAC_IGNORE_BINDINGS:
+                continue
+            if binding.role_ref.name != "cluster-admin":
+                continue
+
+            for subject in (binding.subjects or []):
+                if subject.kind != "ServiceAccount":
+                    continue
+
+                subject_ns = (subject.namespace or "default").strip()
+                if subject_ns in WATCH_RBAC_IGNORE_NAMESPACES:
+                    continue
+                if (
+                    WATCH_RBAC_SCOPE_TO_WATCH_NAMESPACES
+                    and WATCH_NAMESPACE_SET
+                    and subject_ns not in WATCH_NAMESPACE_SET
+                ):
+                    continue
+
+                log.warning(f"[RBAC] RISK: {subject.name} in {subject_ns} → cluster-admin")
+                send_telemetry({
+                    "service": subject.name,
+                    "status": "SecurityAlert",
+                    "restart_count": 0,
+                    "recent_deployment": False,
+                    "logs_summary": (
+                        f"AUDIT: ServiceAccount {subject.name} bound to ClusterRole cluster-admin. "
+                        f"Binding: {binding_name}. "
+                        f"Potential privilege escalation path detected."
+                    ),
+                    "namespace": subject_ns,
+                    "node_id": f"sa-{subject.name.replace('-sa', '')}",
+                })
     except Exception as e:
         log.warning(f"RBAC check failed: {e}")
 
